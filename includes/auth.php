@@ -1,9 +1,13 @@
 <?php
-require_once __DIR__ . '/init.php';
-
+// Fonctions d'authentification
 // Fonction pour obtenir l'ID de l'utilisateur connecté
 function getUserId() {
     return isset($_SESSION['user_id']) ? $_SESSION['user_id'] : null;
+}
+
+// Fonction pour obtenir le type d'utilisateur
+function getUserType() {
+    return isset($_SESSION['user_type']) ? $_SESSION['user_type'] : null;
 }
 
 // Fonction pour vérifier si l'utilisateur est connecté
@@ -14,19 +18,6 @@ function isLoggedIn() {
 // Fonction pour vérifier le type d'utilisateur
 function isUserType($type) {
     return isset($_SESSION['user_type']) && $_SESSION['user_type'] === $type;
-}
-
-// Fonction pour vérifier les permissions
-function checkPermission($required_type) {
-    if (!isLoggedIn()) {
-        set_flash_message('error', get_error_message('login_required'));
-        redirect('login.php');
-    }
-
-    if (!isUserType($required_type)) {
-        set_flash_message('error', get_error_message('permission_denied'));
-        redirect('login.php');
-    }
 }
 
 // Fonction pour connecter un utilisateur
@@ -48,9 +39,22 @@ function checkSessionExpiration() {
     if (isset($_SESSION['last_activity']) && (time() - $_SESSION['last_activity'] > SESSION_LIFETIME)) {
         logoutUser();
         set_flash_message('error', 'Votre session a expiré. Veuillez vous reconnecter.');
-        redirect('login.php');
+        redirect('/auth/login.php');
     }
     $_SESSION['last_activity'] = time();
+}
+
+// Fonction pour vérifier les permissions
+function checkPermission($required_type) {
+    if (!isLoggedIn()) {
+        set_flash_message('error', get_error_message('login_required'));
+        redirect('/auth/login.php');
+    }
+
+    if (!isUserType($required_type)) {
+        set_flash_message('error', get_error_message('permission_denied'));
+        redirect('/auth/login.php');
+    }
 }
 
 // Fonction pour obtenir les informations de l'utilisateur connecté
@@ -104,7 +108,7 @@ function hasAccess($resource_id, $resource_type) {
 }
 
 // Fonction pour vérifier l'accès et rediriger si nécessaire
-function requireAccess($required_type, $redirect_path = '/login.php') {
+function requireAccess($required_type, $redirect_path = '/auth/login.php') {
     if (!isLoggedIn() || $_SESSION['user_type'] !== $required_type) {
         header('Location: ' . $redirect_path);
         exit();

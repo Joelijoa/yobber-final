@@ -93,12 +93,13 @@ if (isLoggedIn() && isUserType('candidate')) {
                         <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
                             <a href="job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-outline-primary btn-sm">Voir plus</a>
                             <?php if (isLoggedIn() && isUserType('candidate')): ?>
-                                <form method="post" action="favorite.php" class="d-inline">
-                                    <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
-                                    <button type="submit" class="btn btn-link p-0 ms-2" title="Ajouter aux favoris">
-                                        <i class="fa<?php echo in_array($job['id'], $favorites) ? 's' : 'r'; ?> fa-heart text-danger"></i>
-                                    </button>
-                                </form>
+                                <button type="button" 
+                                        class="btn btn-link favorite-btn p-0 ms-2" 
+                                        data-job-id="<?php echo htmlspecialchars($job['id']); ?>"
+                                        data-is-favorite="<?php echo in_array($job['id'], $favorites) ? 'true' : 'false'; ?>"
+                                        title="<?php echo in_array($job['id'], $favorites) ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
+                                    <i class="fa<?php echo in_array($job['id'], $favorites) ? 's' : 'r'; ?> fa-heart text-danger"></i>
+                                </button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -111,6 +112,84 @@ if (isLoggedIn() && isUserType('candidate')) {
         <?php endif; ?>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM chargé, initialisation des favoris...');
+    
+    // Attacher les événements à tous les boutons de favoris
+    document.querySelectorAll('[data-job-id]').forEach(button => {
+        console.log('Bouton trouvé:', button);
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Clic sur le bouton de favori');
+            toggleFavorite(this);
+        });
+    });
+});
+
+function toggleFavorite(button) {
+    console.log('Fonction toggleFavorite appelée');
+    const jobId = button.dataset.jobId;
+    if (!jobId) {
+        console.error('ID de l\'offre manquant');
+        return;
+    }
+
+    // Désactiver le bouton pendant la requête
+    button.disabled = true;
+    console.log('Envoi de la requête pour le job ID:', jobId);
+
+    fetch('favorite.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `job_id=${encodeURIComponent(jobId)}`,
+        credentials: 'same-origin'
+    })
+    .then(response => {
+        console.log('Statut de la réponse:', response.status);
+        return response.text().then(text => {
+            console.log('Réponse brute:', text);
+            try {
+                return JSON.parse(text);
+            } catch (e) {
+                console.error('Erreur de parsing JSON:', e);
+                throw new Error('Réponse invalide du serveur');
+            }
+        });
+    })
+    .then(data => {
+        console.log('Données reçues:', data);
+        if (data.success) {
+            const icon = button.querySelector('i');
+            if (data.action === 'added') {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                button.dataset.isFavorite = 'true';
+                button.title = 'Retirer des favoris';
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                button.dataset.isFavorite = 'false';
+                button.title = 'Ajouter aux favoris';
+            }
+        } else {
+            throw new Error(data.message || 'Une erreur est survenue');
+        }
+    })
+    .catch(error => {
+        console.error('Erreur détaillée:', error);
+        alert('Une erreur est survenue lors de la mise à jour des favoris. Veuillez réessayer.');
+    })
+    .finally(() => {
+        button.disabled = false;
+    });
+}
+</script>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 <style>
 .company-logo-placeholder {

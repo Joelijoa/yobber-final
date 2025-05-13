@@ -1,105 +1,88 @@
 <?php
-require_once '../config/database.php';
-require_once '../includes/header.php';
-require_once '../includes/auth.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/header.php';
 
-// Vérifier si l'utilisateur est connecté et est un candidat
-if (!isLoggedIn() || $_SESSION['user_type'] !== 'candidate') {
-    header('Location: ../login.php');
-    exit();
+// Vérifier que l'utilisateur est connecté et est un candidat
+if (!isLoggedIn() || !isUserType('candidate')) {
+    set_flash_message('error', 'Accès non autorisé');
+    redirect('/auth/login.php');
+    exit;
 }
 
-$user_id = $_SESSION['user_id'];
-
-// Récupérer les offres favorites
-$stmt = $conn->prepare("
-    SELECT j.*, f.created_at as favorited_at,
-           DATE_FORMAT(f.created_at, '%d/%m/%Y') as favorited_date
-    FROM favorites f
-    JOIN jobs j ON f.job_id = j.id
-    WHERE f.candidate_id = ?
-    ORDER BY f.created_at DESC
-");
-$stmt->execute([$user_id]);
-$favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    // Récupérer les offres favorites avec les détails
+    $stmt = $conn->prepare("
+        SELECT j.*, f.created_at as favorited_at, r.company_name, r.company_logo 
+        FROM favorites f 
+        JOIN jobs j ON f.job_id = j.id 
+        LEFT JOIN recruiter_profiles r ON j.recruiter_id = r.user_id 
+        WHERE f.candidate_id = ? 
+        ORDER BY f.created_at DESC
+    ");
+    $stmt->execute([getUserId()]);
+    $favorites = $stmt->fetchAll();
+} catch (Exception $e) {
+    error_log('Erreur récupération favoris : ' . $e->getMessage());
+    $favorites = [];
+}
 ?>
 
-<div class="container mt-4">
-    <h2>Mes Offres Favorites</h2>
-
+<div class="container py-5">
+    <h1 class="mb-4">Mes offres favorites</h1>
+    
     <?php if (empty($favorites)): ?>
         <div class="alert alert-info">
-            Vous n'avez pas encore d'offres favorites.
-            <a href="../jobs.php" class="alert-link">Parcourir les offres</a>
+            <i class="fas fa-info-circle me-2"></i>
+            Vous n'avez pas encore d'offres en favoris.
+            <a href="/jobs.php" class="alert-link">Parcourir les offres</a>
         </div>
     <?php else: ?>
         <div class="row">
             <?php foreach ($favorites as $job): ?>
-                <div class="col-md-6 mb-4">
+                <div class="col-md-6 col-lg-4 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
-                            <h5 class="card-title">
-                                <a href="../jobs/view.php?id=<?php echo $job['id']; ?>" class="text-decoration-none">
-                                    <?php echo htmlspecialchars($job['title']); ?>
-                                </a>
-                            </h5>
-                            <h6 class="card-subtitle mb-2 text-muted">
-                                <?php echo htmlspecialchars($job['company_name']); ?>
-                            </h6>
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h5 class="card-title mb-1">
+                                        <a href="/job-details.php?id=<?php echo $job['id']; ?>" class="text-decoration-none">
+                                            <?php echo htmlspecialchars($job['title']); ?>
+                                        </a>
+                                    </h5>
+                                    <h6 class="text-muted"><?php echo htmlspecialchars($job['company_name']); ?></h6>
+                                </div>
+                                <?php if ($job['company_logo']): ?>
+                                    <img src="<?php echo htmlspecialchars($job['company_logo']); ?>" 
+                                         alt="Logo <?php echo htmlspecialchars($job['company_name']); ?>" 
+                                         class="company-logo" 
+                                         style="max-width: 50px; max-height: 50px;">
+                                <?php endif; ?>
+                            </div>
                             
                             <div class="mb-3">
                                 <span class="badge bg-primary"><?php echo htmlspecialchars($job['type']); ?></span>
-                                <span class="badge bg-secondary"><?php echo htmlspecialchars($job['location']); ?></span>
-                                <?php if ($job['salary']): ?>
-                                    <span class="badge bg-info"><?php echo htmlspecialchars($job['salary']); ?></span>
-                                <?php endif; ?>
+                                <span class="ms-2"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($job['location']); ?></span>
                             </div>
-
-                            <p class="card-text">
-                                <?php 
-                                    $description = htmlspecialchars($job['description']);
-                                    echo strlen($description) > 200 ? substr($description, 0, 200) . '...' : $description;
-                                ?>
+                            
+                            <p class="card-text text-truncate">
+                                <?php echo htmlspecialchars($job['description']); ?>
                             </p>
-
+                            
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    Ajouté le <?php echo $job['favorited_date']; ?>
+                                    Ajouté aux favoris le <?php echo date('d/m/Y', strtotime($job['favorited_at'])); ?>
                                 </small>
-                                <div>
-                                    <a href="../jobs/view.php?id=<?php echo $job['id']; ?>" 
-                                       class="btn btn-primary btn-sm">
-                                        Voir détails
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-danger btn-sm"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#removeFavoriteModal<?php echo $job['id']; ?>">
-                                        Retirer
-                                    </button>
-
-                                    <!-- Modal de confirmation de suppression -->
-                                    <div class="modal fade" id="removeFavoriteModal<?php echo $job['id']; ?>" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Confirmer la suppression</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Êtes-vous sûr de vouloir retirer cette offre de vos favoris ?
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <form action="remove_favorite.php" method="POST" class="d-inline">
-                                                        <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
-                                                        <button type="submit" class="btn btn-danger">Confirmer</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <button type="button" 
+                                        class="btn btn-danger btn-sm"
+                                        onclick="toggleFavorite(this)"
+                                        data-job-id="<?php echo $job['id']; ?>">
+                                    <i class="fas fa-heart"></i>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -109,4 +92,37 @@ $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php endif; ?>
 </div>
 
-<?php require_once '../includes/footer.php'; ?> 
+<script>
+function toggleFavorite(button) {
+    const jobId = button.dataset.jobId;
+    
+    fetch('/favorite.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `job_id=${jobId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Supprimer la carte de l'offre
+            button.closest('.col-md-6').remove();
+            
+            // Si c'était la dernière offre, afficher le message "aucun favori"
+            const remainingCards = document.querySelectorAll('.card').length;
+            if (remainingCards === 0) {
+                location.reload();
+            }
+        } else {
+            alert(data.message || 'Une erreur est survenue');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Une erreur est survenue');
+    });
+}
+</script>
+
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 

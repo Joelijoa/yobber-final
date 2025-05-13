@@ -12,8 +12,9 @@ define('DB_USER', 'root');
 define('DB_PASS', '');
 
 // Configuration des chemins
-define('ROOT_PATH', dirname(__DIR__));
-define('UPLOADS_PATH', ROOT_PATH . '/uploads');
+define('ROOT_PATH', dirname(dirname(__DIR__))); // Remonter d'un niveau supplémentaire
+define('PUBLIC_PATH', ROOT_PATH . '/public');
+define('UPLOADS_PATH', PUBLIC_PATH . '/uploads');
 define('CV_PATH', UPLOADS_PATH . '/cv');
 define('PROFILE_PICTURES_PATH', UPLOADS_PATH . '/profile_pictures');
 

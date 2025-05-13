@@ -74,19 +74,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Enregistrement si pas d'erreur
                 if (!$errors) {
                     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-                    $stmt->execute([$email]);
+        $stmt->execute([$email]);
                     if ($stmt->fetch()) {
                         $errors[] = "Cet email est déjà utilisé.";
-                    } else {
+        } else {
                         $pdo->beginTransaction();
                         try {
                             $stmt = $pdo->prepare("INSERT INTO users (email, password, type, first_name, last_name, phone, country, city) 
                                 VALUES (?, ?, 'candidate', ?, ?, ?, ?, ?)");
-                            $stmt->execute([
-                                $email,
-                                password_hash($password, PASSWORD_DEFAULT),
-                                $first_name,
-                                $last_name,
+            $stmt->execute([
+                $email,
+                password_hash($password, PASSWORD_DEFAULT),
+                $first_name,
+                $last_name,
                                 $phone,
                                 $country,
                                 $city
@@ -196,9 +196,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $pdo->prepare("INSERT INTO email_verifications (user_id, code, created_at) VALUES (?, ?, NOW())");
                         $stmt->execute([$user_id, $verification_code]);
                         
-                        $_SESSION['user_id'] = $user_id;
+            $_SESSION['user_id'] = $user_id;
                         $_SESSION['user_type'] = 'recruiter';
-                        $_SESSION['user_email'] = $email;
+            $_SESSION['user_email'] = $email;
                         $_SESSION['user_name'] = $rep_first_name . ' ' . $rep_last_name;
                         
                         // Envoi de l'email avec le code
@@ -345,47 +345,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="col-md-6">
                                         <label class="form-label">Prénom du représentant *</label>
                                         <input type="text" class="form-control" name="rep_first_name" value="<?php echo htmlspecialchars($_POST['rep_first_name'] ?? ''); ?>" required>
-                                    </div>
+                                </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Date de création *</label>
                                         <input type="date" class="form-control" name="creation_date" value="<?php echo htmlspecialchars($_POST['creation_date'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Numéro de téléphone *</label>
                                         <input type="text" class="form-control" name="phone" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" required>
-                                    </div>
-                                    <div class="col-md-6">
+                        </div>
+                                <div class="col-md-6">
                                         <label class="form-label">Email *</label>
                                         <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
-                                    </div>
-                                    <div class="col-md-6">
+                                </div>
+                                <div class="col-md-6">
                                         <label class="form-label">Mot de passe *</label>
                                         <input type="password" class="form-control" name="password" required>
-                                    </div>
+                                </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pays *</label>
                                         <input type="text" class="form-control" name="country" value="<?php echo htmlspecialchars($_POST['country'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ville *</label>
                                         <input type="text" class="form-control" name="city" value="<?php echo htmlspecialchars($_POST['city'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Forme juridique *</label>
                                         <input type="text" class="form-control" name="legal_form" value="<?php echo htmlspecialchars($_POST['legal_form'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Type de société *</label>
                                         <input type="text" class="form-control" name="company_type" value="<?php echo htmlspecialchars($_POST['company_type'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Domaine d'activité *</label>
                                         <input type="text" class="form-control" name="activity_field" value="<?php echo htmlspecialchars($_POST['activity_field'] ?? ''); ?>" required>
-                                    </div>
+                            </div>
                                     <div class="col-12 d-grid">
                                         <button type="submit" class="btn btn-primary">S'inscrire</button>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
                             </form>
                         <?php else: ?>
                             <div class="alert alert-info text-center">Veuillez choisir un type d'inscription pour commencer.</div>

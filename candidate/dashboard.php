@@ -54,99 +54,140 @@ $stmt->execute([$user_id]);
 $recent_favorites = $stmt->fetchAll();
 ?>
 
-<section class="dashboard-section py-5">
-    <div class="container">
-        <h1 class="mb-4">Tableau de bord candidat</h1>
-        <div class="row g-4 mb-4">
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <i class="fas fa-paper-plane fa-2x text-primary mb-2"></i>
-                        <h3 class="h5">Candidatures</h3>
-                        <p class="display-6 fw-bold mb-0"><?php echo $applications_count; ?></p>
-                        <a href="applications/" class="btn btn-outline-primary btn-sm mt-2">Voir mes candidatures</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <i class="fas fa-heart fa-2x text-danger mb-2"></i>
-                        <h3 class="h5">Favoris</h3>
-                        <p class="display-6 fw-bold mb-0"><?php echo $favorites_count; ?></p>
-                        <a href="favorites/" class="btn btn-outline-danger btn-sm mt-2">Voir mes favoris</a>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4">
-                <div class="card text-center shadow-sm">
-                    <div class="card-body">
-                        <i class="fas fa-bell fa-2x text-warning mb-2"></i>
-                        <h3 class="h5">Notifications</h3>
-                        <p class="display-6 fw-bold mb-0"><?php echo $notifications_count; ?></p>
-                        <a href="notifications/" class="btn btn-outline-warning btn-sm mt-2">Voir mes notifications</a>
-                    </div>
+<div class="container mt-4">
+    <h1 class="mb-4">Tableau de bord</h1>
+
+    <?php if ($flash_message = get_flash_message()): ?>
+        <div class="alert alert-<?php echo $flash_message['type']; ?>">
+            <?php echo $flash_message['message']; ?>
+        </div>
+    <?php endif; ?>
+
+    <div class="row g-4 mb-4">
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-paper-plane fa-2x text-primary mb-3"></i>
+                    <h3 class="card-title h5">Mes candidatures</h3>
+                    <p class="display-6 fw-bold mb-0"><?php echo $applications_count; ?></p>
+                    <a href="applications.php" class="btn btn-outline-primary mt-3">
+                        Voir mes candidatures
+                    </a>
                 </div>
             </div>
         </div>
-
-        <div class="row g-4">
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-primary text-white">
-                        <i class="fas fa-paper-plane me-2"></i>Dernières candidatures
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($recent_applications)): ?>
-                            <p class="text-muted mb-0">Aucune candidature récente.</p>
-                        <?php else: ?>
-                            <ul class="list-group list-group-flush">
-                                <?php foreach ($recent_applications as $app): ?>
-                                    <li class="list-group-item">
-                                        <a href="../public/job-details.php?id=<?php echo $app['job_id']; ?>" class="fw-bold text-decoration-none"><?php echo htmlspecialchars($app['title']); ?></a>
-                                        <span class="badge bg-light text-dark ms-2"><?php echo htmlspecialchars($app['job_type']); ?></span>
-                                        <span class="text-muted ms-2"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($app['location']); ?></span>
-                                        <span class="float-end text-muted small">le <?php echo date('d/m/Y', strtotime($app['created_at'])); ?></span>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-6">
-                <div class="card shadow-sm">
-                    <div class="card-header bg-danger text-white">
-                        <i class="fas fa-heart me-2"></i>Derniers favoris
-                    </div>
-                    <div class="card-body">
-                        <?php if (empty($recent_favorites)): ?>
-                            <p class="text-muted mb-0">Aucun favori récent.</p>
-                        <?php else: ?>
-                            <ul class="list-group list-group-flush">
-                                <?php foreach ($recent_favorites as $fav): ?>
-                                    <li class="list-group-item">
-                                        <a href="../public/job-details.php?id=<?php echo $fav['job_id']; ?>" class="fw-bold text-decoration-none"><?php echo htmlspecialchars($fav['title']); ?></a>
-                                        <span class="badge bg-light text-dark ms-2"><?php echo htmlspecialchars($fav['job_type']); ?></span>
-                                        <span class="text-muted ms-2"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($fav['location']); ?></span>
-                                        <span class="float-end text-muted small">le <?php echo date('d/m/Y', strtotime($fav['created_at'])); ?></span>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        <?php endif; ?>
-                    </div>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-heart fa-2x text-danger mb-3"></i>
+                    <h3 class="card-title h5">Mes favoris</h3>
+                    <p class="display-6 fw-bold mb-0"><?php echo $favorites_count; ?></p>
+                    <a href="favorites.php" class="btn btn-outline-danger mt-3">
+                        Voir mes favoris
+                    </a>
                 </div>
             </div>
         </div>
-
-        <div class="row mt-5">
-            <div class="col-12 text-center">
-                <a href="profile/" class="btn btn-primary btn-lg">
-                    <i class="fas fa-user me-2"></i>Accéder à mon profil
-                </a>
+        <div class="col-md-4">
+            <div class="card text-center h-100">
+                <div class="card-body">
+                    <i class="fas fa-bell fa-2x text-warning mb-3"></i>
+                    <h3 class="card-title h5">Notifications</h3>
+                    <p class="display-6 fw-bold mb-0"><?php echo $notifications_count; ?></p>
+                    <a href="notifications.php" class="btn btn-outline-warning mt-3">
+                        Voir mes notifications
+                    </a>
+                </div>
             </div>
         </div>
     </div>
-</section>
+
+    <div class="row g-4">
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-primary text-white">
+                    <i class="fas fa-paper-plane me-2"></i>Dernières candidatures
+                </div>
+                <div class="card-body">
+                    <?php if (empty($recent_applications)): ?>
+                        <p class="text-muted mb-0">Aucune candidature récente.</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recent_applications as $app): ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1">
+                                            <a href="/job-details.php?id=<?php echo $app['job_id']; ?>" class="text-decoration-none">
+                                                <?php echo htmlspecialchars($app['title']); ?>
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <?php echo date('d/m/Y', strtotime($app['created_at'])); ?>
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <span class="badge bg-primary"><?php echo htmlspecialchars($app['job_type']); ?></span>
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-map-marker-alt"></i> 
+                                            <?php echo htmlspecialchars($app['location']); ?>
+                                        </small>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-header bg-danger text-white">
+                    <i class="fas fa-heart me-2"></i>Derniers favoris
+                </div>
+                <div class="card-body">
+                    <?php if (empty($recent_favorites)): ?>
+                        <p class="text-muted mb-0">Aucun favori récent.</p>
+                    <?php else: ?>
+                        <div class="list-group list-group-flush">
+                            <?php foreach ($recent_favorites as $fav): ?>
+                                <div class="list-group-item">
+                                    <div class="d-flex w-100 justify-content-between align-items-center">
+                                        <h6 class="mb-1">
+                                            <a href="/job-details.php?id=<?php echo $fav['job_id']; ?>" class="text-decoration-none">
+                                                <?php echo htmlspecialchars($fav['title']); ?>
+                                            </a>
+                                        </h6>
+                                        <small class="text-muted">
+                                            <?php echo date('d/m/Y', strtotime($fav['created_at'])); ?>
+                                        </small>
+                                    </div>
+                                    <p class="mb-1">
+                                        <span class="badge bg-primary"><?php echo htmlspecialchars($fav['job_type']); ?></span>
+                                        <small class="text-muted ms-2">
+                                            <i class="fas fa-map-marker-alt"></i> 
+                                            <?php echo htmlspecialchars($fav['location']); ?>
+                                        </small>
+                                    </p>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12 text-center">
+            <a href="profile.php" class="btn btn-primary btn-lg">
+                <i class="fas fa-user me-2"></i>Gérer mon profil
+            </a>
+            <a href="/jobs.php" class="btn btn-success btn-lg ms-3">
+                <i class="fas fa-search me-2"></i>Parcourir les offres
+            </a>
+        </div>
+    </div>
+</div>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

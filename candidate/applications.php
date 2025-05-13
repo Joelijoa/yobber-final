@@ -2,26 +2,14 @@
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/auth.php';
+requireAccess('candidate', '/auth/login.php');
 
-// Vérifier si l'utilisateur est connecté et est un candidat
-if (!isLoggedIn() || $_SESSION['user_type'] !== 'candidate') {
-    header('Location: ../login.php');
-    exit();
-}
+$user_id = getUserId();
 
-$user_id = $_SESSION['user_id'];
-
-// Récupérer les candidatures du candidat
+// Récupérer toutes les candidatures du candidat
 $stmt = $conn->prepare("
-    SELECT a.*, j.title as job_title, j.company_name, j.location,
-           DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date,
-           CASE 
-               WHEN a.status = 'pending' THEN 'En attente'
-               WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
-               WHEN a.status = 'accepted' THEN 'Acceptée'
-               WHEN a.status = 'rejected' THEN 'Refusée'
-               ELSE a.status
-           END as status_fr
+    SELECT a.*, j.title as job_title, j.company_name, j.location, j.type as job_type,
+           DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date
     FROM applications a
     JOIN jobs j ON a.job_id = j.id
     WHERE a.candidate_id = ?
@@ -32,21 +20,28 @@ $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="container mt-4">
-    <h2>Mes Candidatures</h2>
+    <h2>Mes candidatures</h2>
+
+    <?php if ($flash_message = get_flash_message()): ?>
+        <div class="alert alert-<?php echo $flash_message['type']; ?>">
+            <?php echo $flash_message['message']; ?>
+        </div>
+    <?php endif; ?>
 
     <?php if (empty($applications)): ?>
         <div class="alert alert-info">
-            Vous n'avez pas encore postulé à des offres d'emploi.
-            <a href="../jobs.php" class="alert-link">Parcourir les offres</a>
+            Vous n'avez pas encore postulé à des offres.
+            <a href="/jobs.php" class="alert-link">Voir les offres disponibles</a>
         </div>
     <?php else: ?>
         <div class="table-responsive">
-            <table class="table table-hover">
+            <table class="table table-striped">
                 <thead>
                     <tr>
                         <th>Offre</th>
                         <th>Entreprise</th>
                         <th>Localisation</th>
+                        <th>Type</th>
                         <th>Date de candidature</th>
                         <th>Statut</th>
                         <th>Actions</th>
@@ -56,62 +51,48 @@ $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($applications as $application): ?>
                         <tr>
                             <td>
-                                <a href="../jobs/view.php?id=<?php echo $application['job_id']; ?>">
+                                <a href="/job-details.php?id=<?php echo $application['job_id']; ?>">
                                     <?php echo htmlspecialchars($application['job_title']); ?>
                                 </a>
                             </td>
                             <td><?php echo htmlspecialchars($application['company_name']); ?></td>
                             <td><?php echo htmlspecialchars($application['location']); ?></td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    <?php echo htmlspecialchars($application['job_type']); ?>
+                                </span>
+                            </td>
                             <td><?php echo $application['application_date']; ?></td>
                             <td>
-                                <span class="badge bg-<?php 
-                                    echo match($application['status']) {
-                                        'pending' => 'warning',
-                                        'reviewed' => 'info',
-                                        'accepted' => 'success',
-                                        'rejected' => 'danger',
-                                        default => 'secondary'
-                                    };
-                                ?>">
-                                    <?php echo $application['status_fr']; ?>
+                                <?php
+                                $status_classes = [
+                                    'pending' => 'bg-warning',
+                                    'reviewed' => 'bg-info',
+                                    'accepted' => 'bg-success',
+                                    'rejected' => 'bg-danger'
+                                ];
+                                $status_labels = [
+                                    'pending' => 'En attente',
+                                    'reviewed' => 'En cours d\'examen',
+                                    'accepted' => 'Acceptée',
+                                    'rejected' => 'Refusée'
+                                ];
+                                ?>
+                                <span class="badge <?php echo $status_classes[$application['status']]; ?>">
+                                    <?php echo $status_labels[$application['status']]; ?>
                                 </span>
                             </td>
                             <td>
-                                <a href="view_application.php?id=<?php echo $application['id']; ?>" 
-                                   class="btn btn-sm btn-primary">
-                                    Voir détails
-                                </a>
-                                <?php if ($application['status'] === 'pending'): ?>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-danger"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#withdrawModal<?php echo $application['id']; ?>">
-                                        Retirer
-                                    </button>
-
-                                    <!-- Modal de confirmation de retrait -->
-                                    <div class="modal fade" id="withdrawModal<?php echo $application['id']; ?>" tabindex="-1">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Confirmer le retrait</h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    Êtes-vous sûr de vouloir retirer votre candidature pour le poste de 
-                                                    <strong><?php echo htmlspecialchars($application['job_title']); ?></strong> ?
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <form action="withdraw_application.php" method="POST" class="d-inline">
-                                                        <input type="hidden" name="application_id" value="<?php echo $application['id']; ?>">
-                                                        <button type="submit" class="btn btn-danger">Confirmer le retrait</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php endif; ?>
+                                <div class="btn-group">
+                                    <a href="/uploads/applications/<?php echo $application['job_id']; ?>/<?php echo $user_id; ?>/<?php echo basename($application['cv_path']); ?>" 
+                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-file-pdf"></i> CV
+                                    </a>
+                                    <a href="/uploads/applications/<?php echo $application['job_id']; ?>/<?php echo $user_id; ?>/<?php echo basename($application['cover_letter_path']); ?>" 
+                                       class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-file-alt"></i> LM
+                                    </a>
+                                </div>
                             </td>
                         </tr>
                     <?php endforeach; ?>

@@ -1,17 +1,31 @@
 <?php
-// Démarrage de la session de manière sécurisée
+// Vérifier si la session n'est pas déjà démarrée
 if (session_status() === PHP_SESSION_NONE) {
+    // Configuration de la session (doit être fait avant session_start)
     ini_set('session.cookie_httponly', 1);
     ini_set('session.use_only_cookies', 1);
-    ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
+    ini_set('session.cookie_secure', 1);
     session_start();
 }
 
-// Charger les configurations
-require_once __DIR__ . '/../config/config.php';
-
-// Configurer le fuseau horaire
+// Définition du fuseau horaire
 date_default_timezone_set('Europe/Paris');
+
+// Définition de la durée de vie de la session (30 minutes) si pas déjà définie
+if (!defined('SESSION_LIFETIME')) {
+    define('SESSION_LIFETIME', 1800);
+}
+
+// Inclusion des fichiers nécessaires dans l'ordre
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/functions.php';
+require_once __DIR__ . '/auth.php';
+
+// Vérification de l'expiration de la session
+if (isLoggedIn()) {
+    checkSessionExpiration();
+}
 
 // Configurer le gestionnaire d'erreurs
 function error_handler($errno, $errstr, $errfile, $errline) {
@@ -96,6 +110,11 @@ try {
 // Fonction pour vérifier le token CSRF
 function checkCsrfToken() {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Ne pas vérifier le token CSRF pour les uploads de fichiers
+        if (!empty($_FILES)) {
+            return;
+        }
+        
         if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
             set_flash_message('error', get_error_message('invalid_request'));
             redirect($_SERVER['HTTP_REFERER'] ?? 'index.php');

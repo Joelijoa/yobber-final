@@ -67,30 +67,46 @@ if (!defined('BASE_PATH')) {
                 <?php if (isLoggedIn()): ?>
                     <!-- Menu utilisateur connecté -->
                     <div class="dropdown">
-                        <button class="btn btn-link dropdown-toggle text-dark text-decoration-none" type="button" id="userMenu" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i><?php echo htmlspecialchars(getCurrentUser()['first_name'] . ' ' . getCurrentUser()['last_name']); ?>
+                        <button class="btn btn-link dropdown-toggle text-dark text-decoration-none" 
+                                type="button" 
+                                id="userDropdown"
+                                data-bs-toggle="dropdown" 
+                                aria-expanded="false">
+                            <i class="fas fa-user-circle me-1"></i>
+                            <?php echo htmlspecialchars(getCurrentUser()['first_name'] . ' ' . getCurrentUser()['last_name']); ?>
                         </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                             <?php if (isUserType('candidate')): ?>
-                                <li><a class="dropdown-item" href="../candidate/dashboard.php">Tableau de bord</a></li>
-                                <li><a class="dropdown-item" href="../candidate/profile.php">Mon profil</a></li>
-                                <li><a class="dropdown-item" href="../candidate/applications">Mes candidatures</a></li>
-                                <li><a class="dropdown-item" href="../candidate/favorites.php">Favoris</a></li>
+                                <li><a class="dropdown-item" href="/candidate/dashboard.php">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</a></li>
+                                <li><a class="dropdown-item" href="/candidate/profile.php">
+                                    <i class="fas fa-user me-2"></i>Mon profil</a></li>
+                                <li><a class="dropdown-item" href="/candidate/applications.php">
+                                    <i class="fas fa-file-alt me-2"></i>Mes candidatures</a></li>
+                                <li><a class="dropdown-item" href="/candidate/favorites.php">
+                                    <i class="fas fa-heart me-2"></i>Favoris</a></li>
                             <?php elseif (isUserType('recruiter')): ?>
-                                <li><a class="dropdown-item" href="../recruiter/dashboard.php">Tableau de bord</a></li>
-                                <li><a class="dropdown-item" href="../recruiter/profile/">Profil entreprise</a></li>
-                                <li><a class="dropdown-item" href="../recruiter/jobs/">Mes offres</a></li>
-                                <li><a class="dropdown-item" href="../recruiter/applications/">Candidatures</a></li>
+                                <li><a class="dropdown-item" href="/recruiter/dashboard.php">
+                                    <i class="fas fa-tachometer-alt me-2"></i>Tableau de bord</a></li>
+                                <li><a class="dropdown-item" href="/recruiter/profile/">
+                                    <i class="fas fa-building me-2"></i>Profil entreprise</a></li>
+                                <li><a class="dropdown-item" href="/recruiter/jobs/">
+                                    <i class="fas fa-briefcase me-2"></i>Mes offres</a></li>
+                                <li><a class="dropdown-item" href="/recruiter/applications/">
+                                    <i class="fas fa-users me-2"></i>Candidatures</a></li>
                             <?php endif; ?>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="/auth/logout.php">Déconnexion</a></li>
+                            <li><a class="dropdown-item" href="/auth/logout.php">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion</a></li>
                         </ul>
                     </div>
                 <?php else: ?>
                     <!-- Boutons de connexion/inscription -->
                     <div class="d-flex gap-2">
-                        <a href="/auth/login.php" class="btn btn-outline-primary">Connexion</a>
-                        <a href="/auth/register.php" class="btn btn-primary">Inscription</a>
+                        <a href="/auth/login.php" class="btn btn-outline-primary">
+                            <i class="fas fa-sign-in-alt me-1"></i>Connexion</a>
+                        <a href="/auth/register.php" class="btn btn-primary">
+                            <i class="fas fa-user-plus me-1"></i>Inscription</a>
                     </div>
                 <?php endif; ?>
             </div>
@@ -115,4 +131,20 @@ if (!defined('BASE_PATH')) {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
             <?php unset($_SESSION['flash_message'], $_SESSION['flash_type']); ?>
-        <?php endif; ?> 
+        <?php endif; ?>
+    
+    <!-- Les scripts sont déplacés juste avant la fermeture du body -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    // Initialiser tous les dropdowns Bootstrap
+    document.addEventListener('DOMContentLoaded', function() {
+        var dropdowns = document.querySelectorAll('.dropdown-toggle');
+        dropdowns.forEach(function(dropdown) {
+            new bootstrap.Dropdown(dropdown);
+        });
+    });
+    </script>
+</body>
+</html> 

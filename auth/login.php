@@ -50,10 +50,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($user && password_verify($password, $user['password'])) {
                 // Connexion réussie
-                $_SESSION['user_id'] = $user['id'];
+                loginUser($user['id'], $user['type']);
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
-                $_SESSION['user_type'] = $user['type'];
                 
                 // Gestion du "Se souvenir de moi"
                 if ($remember) {
@@ -68,11 +67,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Redirection selon le type d'utilisateur
                 if ($user['type'] === 'candidate') {
-                    redirect('/public/candidate/dashboard.php');
+                    redirect('/candidate/dashboard.php');
                 } elseif ($user['type'] === 'recruiter') {
-                    redirect('/public/recruiter/dashboard.php');
+                    redirect('/recruiter/dashboard.php');
                 } else {
-                    redirect('/public/admin/dashboard.php');
+                    redirect('/admin/dashboard.php');
                 }
                 exit;
             } else {

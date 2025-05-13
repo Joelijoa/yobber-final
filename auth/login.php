@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     error_log('Session CSRF: ' . ($_SESSION['csrf_token'] ?? 'not set'));
     error_log('POST CSRF: ' . ($_POST['csrf_token'] ?? 'not set'));
 
-    // En mode développement, on vérifie juste si le token existe
+    // ver token existe
     if (!isset($_POST['csrf_token'])) {
         error_log('CSRF token missing');
         set_flash_message('error', get_error_message('invalid_request'));

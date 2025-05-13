@@ -1,6 +1,8 @@
- <?php
+<?php
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/header.php';
+
 $page_title = "Contact - JobPortal";
-require_once '../includes/header.php';
 
 // Traitement du formulaire de contact
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -219,4 +221,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 })()
 </script>
 
-<?php require_once '../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>

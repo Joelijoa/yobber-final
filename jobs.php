@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/init.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/includes/header.php';
 
 // Récupération des filtres
 $search = $_GET['q'] ?? '';
@@ -28,14 +28,14 @@ if ($type) {
 }
 $sql .= " ORDER BY j.created_at DESC";
 
-$stmt = $pdo->prepare($sql);
+$stmt = $conn->prepare($sql);
 $stmt->execute($params);
 $jobs = $stmt->fetchAll();
 
 // Récupérer les favoris de l'utilisateur connecté (si candidat)
 $favorites = [];
 if (isLoggedIn() && isUserType('candidate')) {
-    $stmtFav = $pdo->prepare("SELECT job_id FROM favorites WHERE candidate_id = ?");
+    $stmtFav = $conn->prepare("SELECT job_id FROM favorites WHERE candidate_id = ?");
     $stmtFav->execute([$_SESSION['user_id']]);
     $favorites = array_column($stmtFav->fetchAll(), 'job_id');
 }
@@ -111,7 +111,7 @@ if (isLoggedIn() && isUserType('candidate')) {
         <?php endif; ?>
     </div>
 </div>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
 <style>
 .company-logo-placeholder {
     background-color: #f3f3f3;

@@ -1,20 +1,12 @@
 <?php
-$page_title = "Vérification du compte - JobPortal";
-require_once __DIR__ . '/../../includes/header.php';
-require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Initialisation de la connexion à la base de données
 try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES => false
-        ]
-    );
+    $database = new Database();
+    $pdo = $database->getConnection();
 } catch (PDOException $e) {
     die("Erreur de connexion à la base de données : " . $e->getMessage());
 }
@@ -22,6 +14,16 @@ try {
 $email = $_GET['email'] ?? '';
 $errors = [];
 $success = '';
+
+// Afficher le code de vérification dans les logs pour le développement
+if ($email) {
+    $stmt = $pdo->prepare("SELECT u.id, v.code FROM users u JOIN email_verifications v ON u.id = v.user_id WHERE u.email = ? ORDER BY v.created_at DESC LIMIT 1");
+    $stmt->execute([$email]);
+    $result = $stmt->fetch();
+    if ($result) {
+        error_log("Code de vérification pour $email : " . $result['code']);
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $verification_code = $_POST['verification_code'] ?? '';
@@ -106,6 +108,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <button type="submit" class="btn btn-primary btn-lg">Vérifier</button>
                                 </div>
                             </form>
+                            
+                            <?php if (defined('DEBUG_MODE') && DEBUG_MODE): ?>
+                            <div class="mt-3">
+                                <p class="text-muted small text-center">
+                                    Mode développement : Vérifiez les logs PHP pour voir le code de vérification.
+                                </p>
+                            </div>
+                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -127,4 +137,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 </style>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 

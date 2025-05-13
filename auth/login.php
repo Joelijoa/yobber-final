@@ -1,10 +1,10 @@
 <?php
-$page_title = "Connexion - JobPortal";
-require_once __DIR__ . '/../../includes/header.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/header.php';
 
 // Redirection si déjà connecté
 if (isLoggedIn()) {
-    redirect('/index.php');
+    redirect('/public/index.php');
     exit;
 }
 
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             // Vérification des identifiants
-            $stmt = $pdo->prepare("SELECT id, email, password, first_name, last_name, type 
+            $stmt = $conn->prepare("SELECT id, email, password, first_name, last_name, type 
                      FROM users 
                      WHERE email = ?");
             $stmt->execute([$email]);
@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $token = bin2hex(random_bytes(32));
                     $expires = date('Y-m-d H:i:s', strtotime('+30 days'));
                     
-                    $stmt = $pdo->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");
+                    $stmt = $conn->prepare("INSERT INTO remember_tokens (user_id, token, expires_at) VALUES (?, ?, ?)");
                     $stmt->execute([$user['id'], $token, $expires]);
                     
                     setcookie('remember_token', $token, strtotime('+30 days'), '/', '', true, true);
@@ -68,11 +68,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 // Redirection selon le type d'utilisateur
                 if ($user['type'] === 'candidate') {
-                    redirect('/candidate/dashboard.php');
+                    redirect('/public/candidate/dashboard.php');
                 } elseif ($user['type'] === 'recruiter') {
-                    redirect('/recruiter/dashboard.php');
+                    redirect('/public/recruiter/dashboard.php');
                 } else {
-                    redirect('/admin/dashboard.php');
+                    redirect('/public/admin/dashboard.php');
                 }
                 exit;
             } else {
@@ -218,4 +218,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 })()
 </script>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 

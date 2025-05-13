@@ -1,0 +1,11 @@
+# Forcer le traitement des fichiers PHP
+AddType application/x-httpd-php .php
+
+# Protéger le répertoire
+Options -Indexes
+
+# Autoriser l'exécution des fichiers PHP
+<FilesMatch "\.php$">
+    Order Allow,Deny
+    Allow from all
+</FilesMatch> 

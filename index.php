@@ -1,18 +1,14 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/header.php';
 
-// Vérifier la connexion à la base de données avant d'inclure le header
+// Vérifier la connexion à la base de données
 try {
-    $pdo->query("SELECT 1");
+    $database = new Database();
+    $pdo = $database->getConnection();
 } catch (PDOException $e) {
-    die('<div class="alert alert-danger" style="margin: 20px;">
-        <strong>Erreur de connexion à la base de données :</strong> 
-        Impossible de se connecter à la base de données. Veuillez vérifier que le serveur MySQL est démarré.
-    </div>');
+    die("Erreur de connexion à la base de données : " . $e->getMessage());
 }
-
-require_once __DIR__ . '/../includes/header.php';
 
 // Récupérer les dernières offres d'emploi actives
 try {
@@ -66,7 +62,7 @@ try {
                 </div>
             </div>
             <div class="col-lg-6 d-none d-lg-block">
-                <img src="../assets/images/hero-image.svg" alt="Job Search" class="img-fluid">
+                <img src="assets/images/hero-image.svg" alt="Job Search" class="img-fluid">
             </div>
         </div>
     </div>
@@ -133,16 +129,16 @@ try {
             <div class="carousel-inner">
                 <div class="carousel-item active">
                     <div class="d-flex justify-content-center gap-5">
-                        <img src="../assets/images/Entreprise1.png" alt="Entreprise 1" style="height: 80px;">
-                        <img src="../assets/images/Entreprise2.png" alt="Entreprise 2" style="height: 80px;">
-                        <img src="../assets/images/Entreprise3.png" alt="Entreprise 3" style="height: 80px;">
+                        <img src="assets/images/Entreprise1.png" alt="Entreprise 1" style="height: 80px;">
+                        <img src="assets/images/Entreprise2.png" alt="Entreprise 2" style="height: 80px;">
+                        <img src="assets/images/Entreprise3.png" alt="Entreprise 3" style="height: 80px;">
                     </div>
                 </div>
                 <div class="carousel-item">
                     <div class="d-flex justify-content-center gap-5">
-                        <img src="../assets/images/Entreprise4.jpg" alt="Entreprise 4" style="height: 80px;">
-                        <img src="../assets/images/Entreprise5.png" alt="Entreprise 5" style="height: 80px;">
-                        <img src="../assets/images/Entreprise6.png" alt="Entreprise 6" style="height: 80px;">
+                        <img src="assets/images/Entreprise4.jpg" alt="Entreprise 4" style="height: 80px;">
+                        <img src="assets/images/Entreprise5.png" alt="Entreprise 5" style="height: 80px;">
+                        <img src="assets/images/Entreprise6.png" alt="Entreprise 6" style="height: 80px;">
                     </div>
                 </div>
             </div>
@@ -170,7 +166,7 @@ try {
     </div>
 </section>
 
-<?php require_once __DIR__ . '/../includes/footer.php'; ?>
+<?php require_once __DIR__ . '/includes/footer.php'; ?>
 <style>
 .hero-section {
     background: linear-gradient(135deg, #f8fafc, #e3e9f7);

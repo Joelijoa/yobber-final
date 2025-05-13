@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/init.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/includes/header.php';
 
 $job_id = $_GET['id'] ?? null;
 if (!$job_id) {
@@ -10,12 +10,12 @@ if (!$job_id) {
 }
 
 // Récupérer les infos de l'offre
-$stmt = $pdo->prepare("SELECT j.*, r.company_name, r.company_logo, r.company_description FROM jobs j LEFT JOIN recruiter_profiles r ON j.recruiter_id = r.user_id WHERE j.id = ? AND j.status = 'active' LIMIT 1");
+$stmt = $conn->prepare("SELECT j.*, r.company_name, r.company_logo, r.company_description FROM jobs j LEFT JOIN recruiter_profiles r ON j.recruiter_id = r.user_id WHERE j.id = ? AND j.status = 'active' LIMIT 1");
 $stmt->execute([$job_id]);
 $job = $stmt->fetch();
 if (!$job) {
     echo '<div class="container py-5"><div class="alert alert-danger">Offre non trouvée ou inactive.</div></div>';
-    require_once __DIR__ . '/../includes/footer.php';
+    require_once __DIR__ . '/includes/footer.php';
     exit;
 }
 
@@ -28,12 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
         $error = 'La lettre de motivation est obligatoire.';
     } else {
         // Vérifier si déjà candidat
-        $stmtCheck = $pdo->prepare("SELECT id FROM applications WHERE job_id = ? AND candidate_id = ?");
+        $stmtCheck = $conn->prepare("SELECT id FROM applications WHERE job_id = ? AND candidate_id = ?");
         $stmtCheck->execute([$job_id, $_SESSION['user_id']]);
         if ($stmtCheck->fetch()) {
             $error = 'Vous avez déjà postulé à cette offre.';
         } else {
-            $stmtApply = $pdo->prepare("INSERT INTO applications (job_id, candidate_id, cover_letter, status, created_at) VALUES (?, ?, ?, 'pending', NOW())");
+            $stmtApply = $conn->prepare("INSERT INTO applications (job_id, candidate_id, cover_letter, status, created_at) VALUES (?, ?, ?, 'pending', NOW())");
             $stmtApply->execute([$job_id, $_SESSION['user_id'], $motivation]);
             $success = 'Votre candidature a bien été envoyée !';
         }
@@ -113,4 +113,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
         </div>
     </div>
 </div>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/includes/footer.php'; ?> 

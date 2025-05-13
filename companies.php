@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/init.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/includes/init.php';
+require_once __DIR__ . '/includes/header.php';
 
 // Récupérer toutes les entreprises partenaires
 $stmt = $pdo->query("SELECT user_id, company_name, company_logo, company_description FROM recruiter_profiles ORDER BY company_name ASC");
@@ -34,4 +34,4 @@ $companies = $stmt->fetchAll();
         <?php endif; ?>
     </div>
 </div>
-<?php require_once __DIR__ . '/../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/includes/footer.php'; ?> 

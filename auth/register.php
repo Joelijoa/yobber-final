@@ -1,6 +1,6 @@
 <?php
-$page_title = "Inscription - JobPortal";
-require_once __DIR__ . '/../../includes/header.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/header.php';
 
 // Activer l'affichage des erreurs
 ini_set('display_errors', 1);
@@ -27,6 +27,13 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     error_log('Début du traitement du formulaire d\'inscription');
     error_log('POST Data: ' . print_r($_POST, true));
+    
+    try {
+        $database = new Database();
+        $pdo = $database->getConnection();
+    } catch (PDOException $e) {
+        die("Erreur de connexion à la base de données : " . $e->getMessage());
+    }
     
     // Vérification simple du token CSRF
     if (!isset($_POST['csrf_token'])) {
@@ -435,4 +442,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Aucun JavaScript pour la manipulation des formulaires
 </script>
 
-<?php require_once __DIR__ . '/../../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 

@@ -1,30 +1,45 @@
 <?php
-require_once '../config/database.php';
-require_once '../includes/header.php';
-require_once '../includes/auth.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../includes/init.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Vérifier si l'utilisateur est connecté et est un recruteur
-if (!isLoggedIn() || $_SESSION['user_type'] !== 'recruiter') {
-    header('Location: ../login.php');
-    exit();
+if (!isLoggedIn() || !isUserType('recruiter')) {
+    set_flash_message('error', 'Accès non autorisé.');
+    redirect('/auth/login.php');
+    exit;
 }
 
-$user_id = $_SESSION['user_id'];
+try {
+    // Initialiser la connexion à la base de données
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    $user_id = getUserId();
 
-// Récupérer les offres d'emploi du recruteur
-$stmt = $conn->prepare("
-    SELECT j.*, 
-           COUNT(a.id) as application_count,
-           DATE_FORMAT(j.created_at, '%d/%m/%Y') as posted_date,
-           DATE_FORMAT(j.expiry_date, '%d/%m/%Y') as expiry_date_formatted
-    FROM jobs j
-    LEFT JOIN applications a ON j.id = a.job_id
-    WHERE j.recruiter_id = ?
-    GROUP BY j.id
-    ORDER BY j.created_at DESC
-");
-$stmt->execute([$user_id]);
-$jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Récupérer les offres d'emploi du recruteur
+    $stmt = $conn->prepare("
+        SELECT j.*, 
+               COUNT(a.id) as application_count,
+               DATE_FORMAT(j.created_at, '%d/%m/%Y') as posted_date,
+               DATE_FORMAT(j.expiry_date, '%d/%m/%Y') as expiry_date_formatted
+        FROM jobs j
+        LEFT JOIN applications a ON j.id = a.job_id
+        WHERE j.recruiter_id = :user_id
+        GROUP BY j.id
+        ORDER BY j.created_at DESC
+    ");
+    $stmt->execute(['user_id' => $user_id]);
+    $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (Exception $e) {
+    set_flash_message('error', 'Une erreur est survenue lors de la récupération des offres.');
+    $jobs = [];
+}
+
+$page_title = "Mes offres d'emploi";
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-4">
@@ -124,6 +139,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                                 <form action="close_job.php" method="POST" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                                                     <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
                                                     <button type="submit" class="btn btn-warning">Fermer l'offre</button>
                                                 </form>
@@ -152,6 +168,7 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                             <div class="modal-footer">
                                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                                                 <form action="delete_job.php" method="POST" class="d-inline">
+                                                    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                                                     <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
                                                     <button type="submit" class="btn btn-danger">Supprimer</button>
                                                 </form>
@@ -168,4 +185,4 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <?php endif; ?>
 </div>
 
-<?php require_once '../includes/footer.php'; ?> 
+<?php require_once __DIR__ . '/../includes/footer.php'; ?> 

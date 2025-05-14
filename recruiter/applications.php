@@ -1,62 +1,94 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/init.php';
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../config/database.php';
 
 // Vérifier si l'utilisateur est connecté et est un recruteur
-if (!isLoggedIn() || $_SESSION['user_type'] !== 'recruiter') {
-    header('Location: ../login.php');
-    exit();
+if (!isLoggedIn() || !isUserType('recruiter')) {
+    set_flash_message('error', 'Accès non autorisé.');
+    redirect('/auth/login.php');
+    exit;
 }
 
-$user_id = $_SESSION['user_id'];
-$job_id = isset($_GET['job_id']) ? $_GET['job_id'] : null;
+try {
+    // Initialiser la connexion à la base de données
+    $database = new Database();
+    $conn = $database->getConnection();
+    
+    $user_id = getUserId();
+    $job_id = isset($_GET['job_id']) ? (int)$_GET['job_id'] : null;
 
-// Construire la requête de base
-$query = "
-    SELECT a.*, j.title as job_title, j.company_name,
-           c.first_name, c.last_name, c.email, c.phone,
-           DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date,
-           CASE 
-               WHEN a.status = 'pending' THEN 'En attente'
-               WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
-               WHEN a.status = 'accepted' THEN 'Acceptée'
-               WHEN a.status = 'rejected' THEN 'Refusée'
-               ELSE a.status
-           END as status_fr
-    FROM applications a
-    JOIN jobs j ON a.job_id = j.id
-    JOIN candidates c ON a.candidate_id = c.user_id
-    WHERE j.recruiter_id = ?
-";
+    // Construire la requête de base
+    $query = "
+        SELECT a.*, j.title as job_title, j.company_name,
+               u.first_name, u.last_name, u.email,
+               DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date,
+               CASE 
+                   WHEN a.status = 'pending' THEN 'En attente'
+                   WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
+                   WHEN a.status = 'accepted' THEN 'Acceptée'
+                   WHEN a.status = 'rejected' THEN 'Refusée'
+                   ELSE a.status
+               END as status_fr
+        FROM applications a
+        JOIN jobs j ON a.job_id = j.id
+        JOIN users u ON a.candidate_id = u.id
+        WHERE j.recruiter_id = :user_id
+    ";
 
-$params = [$user_id];
+    $params = ['user_id' => $user_id];
 
-// Ajouter le filtre par offre si spécifié
-if ($job_id) {
-    $query .= " AND a.job_id = ?";
-    $params[] = $job_id;
+    // Ajouter le filtre par offre si spécifié
+    if ($job_id) {
+        $query .= " AND a.job_id = :job_id";
+        $params['job_id'] = $job_id;
+    }
+
+    $query .= " ORDER BY a.created_at DESC";
+
+    // Exécuter la requête
+    $stmt = $conn->prepare($query);
+    $stmt->execute($params);
+    $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Récupérer la liste des offres pour le filtre
+    $stmt = $conn->prepare("
+        SELECT id, title 
+        FROM jobs 
+        WHERE recruiter_id = :user_id
+        ORDER BY title
+    ");
+    $stmt->execute(['user_id' => $user_id]);
+    $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (Exception $e) {
+    set_flash_message('error', "Une erreur est survenue : " . $e->getMessage());
+    redirect('/recruiter/dashboard.php');
+    exit;
 }
 
-$query .= " ORDER BY a.created_at DESC";
-
-// Exécuter la requête
-$stmt = $conn->prepare($query);
-$stmt->execute($params);
-$applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Récupérer la liste des offres pour le filtre
-$stmt = $conn->prepare("
-    SELECT id, title 
-    FROM jobs 
-    WHERE recruiter_id = ? AND status = 'active'
-    ORDER BY title
-");
-$stmt->execute([$user_id]);
-$jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$page_title = "Gestion des candidatures";
+require_once __DIR__ . '/../includes/header.php';
 ?>
 
 <div class="container mt-4">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="dashboard.php">Tableau de bord</a></li>
+            <li class="breadcrumb-item active">Candidatures</li>
+        </ol>
+    </nav>
+
+    <?php 
+    $flash_message = get_flash_message();
+    if ($flash_message): 
+    ?>
+        <div class="alert alert-<?php echo $flash_message['type']; ?>">
+            <?php echo htmlspecialchars($flash_message['message']); ?>
+        </div>
+    <?php endif; ?>
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Gestion des candidatures</h2>
         <?php if ($job_id): ?>
@@ -110,9 +142,6 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <br>
                                 <small class="text-muted">
                                     <?php echo htmlspecialchars($application['email']); ?>
-                                    <?php if ($application['phone']): ?>
-                                        <br><?php echo htmlspecialchars($application['phone']); ?>
-                                    <?php endif; ?>
                                 </small>
                             </td>
                             <td>
@@ -139,62 +168,10 @@ $jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 </span>
                             </td>
                             <td>
-                                <div class="btn-group">
-                                    <a href="view_application.php?id=<?php echo $application['id']; ?>" 
-                                       class="btn btn-sm btn-primary">
-                                        <i class="fas fa-eye"></i> Voir
-                                    </a>
-                                    <button type="button" 
-                                            class="btn btn-sm btn-success"
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#updateStatusModal<?php echo $application['id']; ?>">
-                                        <i class="fas fa-edit"></i> Statut
-                                    </button>
-                                </div>
-
-                                <!-- Modal de mise à jour du statut -->
-                                <div class="modal fade" id="updateStatusModal<?php echo $application['id']; ?>" tabindex="-1">
-                                    <div class="modal-dialog">
-                                        <div class="modal-content">
-                                            <div class="modal-header">
-                                                <h5 class="modal-title">Mettre à jour le statut</h5>
-                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                            </div>
-                                            <form action="update_application_status.php" method="POST">
-                                                <div class="modal-body">
-                                                    <input type="hidden" name="application_id" value="<?php echo $application['id']; ?>">
-                                                    
-                                                    <div class="mb-3">
-                                                        <label for="status" class="form-label">Nouveau statut</label>
-                                                        <select class="form-select" name="status" required>
-                                                            <option value="pending" <?php echo $application['status'] === 'pending' ? 'selected' : ''; ?>>
-                                                                En attente
-                                                            </option>
-                                                            <option value="reviewed" <?php echo $application['status'] === 'reviewed' ? 'selected' : ''; ?>>
-                                                                En cours d'examen
-                                                            </option>
-                                                            <option value="accepted" <?php echo $application['status'] === 'accepted' ? 'selected' : ''; ?>>
-                                                                Acceptée
-                                                            </option>
-                                                            <option value="rejected" <?php echo $application['status'] === 'rejected' ? 'selected' : ''; ?>>
-                                                                Refusée
-                                                            </option>
-                                                        </select>
-                                                    </div>
-
-                                                    <div class="mb-3">
-                                                        <label for="feedback" class="form-label">Commentaire (optionnel)</label>
-                                                        <textarea class="form-control" name="feedback" rows="3"><?php echo htmlspecialchars($application['feedback'] ?? ''); ?></textarea>
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                                                    <button type="submit" class="btn btn-primary">Enregistrer</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
+                                <a href="view_application.php?id=<?php echo $application['id']; ?>" 
+                                   class="btn btn-sm btn-primary">
+                                    <i class="fas fa-eye"></i> Voir
+                                </a>
                             </td>
                         </tr>
                     <?php endforeach; ?>

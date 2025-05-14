@@ -1,88 +1,76 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/header.php';
+require_once __DIR__ . '/../includes/auth.php';
+requireAccess('candidate', '/auth/login.php');
 
-// Vérifier que l'utilisateur est connecté et est un candidat
-if (!isLoggedIn() || !isUserType('candidate')) {
-    set_flash_message('error', 'Accès non autorisé');
-    redirect('/auth/login.php');
-    exit;
-}
+$user_id = getUserId();
 
-try {
-    $database = new Database();
-    $conn = $database->getConnection();
-    
-    // Récupérer les offres favorites avec les détails
-    $stmt = $conn->prepare("
-        SELECT j.*, f.created_at as favorited_at, r.company_name, r.company_logo 
-        FROM favorites f 
-        JOIN jobs j ON f.job_id = j.id 
-        LEFT JOIN recruiter_profiles r ON j.recruiter_id = r.user_id 
-        WHERE f.candidate_id = ? 
-        ORDER BY f.created_at DESC
-    ");
-    $stmt->execute([getUserId()]);
-    $favorites = $stmt->fetchAll();
-} catch (Exception $e) {
-    error_log('Erreur récupération favoris : ' . $e->getMessage());
-    $favorites = [];
-}
+// Récupérer les favoris du candidat
+$stmt = $conn->prepare("
+    SELECT j.*, f.created_at as favorited_at,
+           DATE_FORMAT(j.created_at, '%d/%m/%Y') as posted_date,
+           DATE_FORMAT(f.created_at, '%d/%m/%Y') as favorite_date
+    FROM favorites f
+    JOIN jobs j ON f.job_id = j.id
+    WHERE f.candidate_id = ?
+    ORDER BY f.created_at DESC
+");
+$stmt->execute([$user_id]);
+$favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="container py-5">
-    <h1 class="mb-4">Mes offres favorites</h1>
-    
+<div class="container mt-4">
+    <h2>Mes offres favorites</h2>
+
+    <?php if ($flash_message = get_flash_message()): ?>
+        <div class="alert alert-<?php echo $flash_message['type']; ?>">
+            <?php echo $flash_message['message']; ?>
+        </div>
+    <?php endif; ?>
+
     <?php if (empty($favorites)): ?>
         <div class="alert alert-info">
-            <i class="fas fa-info-circle me-2"></i>
             Vous n'avez pas encore d'offres en favoris.
             <a href="/jobs.php" class="alert-link">Parcourir les offres</a>
         </div>
     <?php else: ?>
         <div class="row">
             <?php foreach ($favorites as $job): ?>
-                <div class="col-md-6 col-lg-4 mb-4">
+                <div class="col-md-6 mb-4">
                     <div class="card h-100">
                         <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <h5 class="card-title mb-1">
-                                        <a href="/job-details.php?id=<?php echo $job['id']; ?>" class="text-decoration-none">
-                                            <?php echo htmlspecialchars($job['title']); ?>
-                                        </a>
-                                    </h5>
-                                    <h6 class="text-muted"><?php echo htmlspecialchars($job['company_name']); ?></h6>
-                                </div>
-                                <?php if ($job['company_logo']): ?>
-                                    <img src="<?php echo htmlspecialchars($job['company_logo']); ?>" 
-                                         alt="Logo <?php echo htmlspecialchars($job['company_name']); ?>" 
-                                         class="company-logo" 
-                                         style="max-width: 50px; max-height: 50px;">
-                                <?php endif; ?>
-                            </div>
-                            
-                            <div class="mb-3">
-                                <span class="badge bg-primary"><?php echo htmlspecialchars($job['type']); ?></span>
-                                <span class="ms-2"><i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($job['location']); ?></span>
-                            </div>
-                            
-                            <p class="card-text text-truncate">
-                                <?php echo htmlspecialchars($job['description']); ?>
+                            <h5 class="card-title">
+                                <a href="/job-details.php?id=<?php echo $job['id']; ?>" class="text-decoration-none">
+                                    <?php echo htmlspecialchars($job['title']); ?>
+                                </a>
+                            </h5>
+                            <h6 class="card-subtitle mb-2 text-muted">
+                                <?php echo htmlspecialchars($job['company_name']); ?>
+                            </h6>
+                            <p class="card-text">
+                                <i class="fas fa-map-marker-alt"></i> <?php echo htmlspecialchars($job['location']); ?><br>
+                                <i class="fas fa-clock"></i> <?php echo htmlspecialchars($job['type']); ?><br>
+                                <i class="fas fa-money-bill-wave"></i> <?php echo htmlspecialchars($job['salary']); ?>
                             </p>
-                            
+                            <div class="card-text mb-3">
+                                <?php echo nl2br(htmlspecialchars(substr($job['description'], 0, 150))); ?>...
+                            </div>
                             <div class="d-flex justify-content-between align-items-center">
                                 <small class="text-muted">
-                                    Ajouté aux favoris le <?php echo date('d/m/Y', strtotime($job['favorited_at'])); ?>
+                                    Ajouté aux favoris le <?php echo $job['favorite_date']; ?>
                                 </small>
-                                <button type="button" 
-                                        class="btn btn-danger btn-sm"
-                                        onclick="toggleFavorite(this)"
-                                        data-job-id="<?php echo $job['id']; ?>">
-                                    <i class="fas fa-heart"></i>
-                                </button>
+                                <div class="btn-group">
+                                    <a href="/job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-sm btn-primary">
+                                        Voir détails
+                                    </a>
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger favorite-btn" 
+                                            data-job-id="<?php echo $job['id']; ?>"
+                                            onclick="toggleFavorite(this)">
+                                        <i class="fas fa-heart"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -109,9 +97,9 @@ function toggleFavorite(button) {
             // Supprimer la carte de l'offre
             button.closest('.col-md-6').remove();
             
-            // Si c'était la dernière offre, afficher le message "aucun favori"
-            const remainingCards = document.querySelectorAll('.card').length;
-            if (remainingCards === 0) {
+            // Si plus d'offres, afficher le message
+            const jobCards = document.querySelectorAll('.col-md-6');
+            if (jobCards.length === 0) {
                 location.reload();
             }
         } else {

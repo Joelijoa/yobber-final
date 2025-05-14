@@ -116,14 +116,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
                     <h5 class="text-muted mb-3"><?php echo htmlspecialchars($job['company_name']); ?></h5>
                 </div>
                 <?php if (isLoggedIn() && isUserType('candidate')): ?>
-                <button type="button" 
-                        class="btn <?php echo $is_favorite ? 'btn-danger' : 'btn-outline-danger'; ?> favorite-btn" 
-                        onclick="toggleFavorite(this)" 
-                        data-job-id="<?php echo $job_id; ?>"
-                        data-is-favorite="<?php echo $is_favorite ? 'true' : 'false'; ?>">
-                    <i class="fas fa-heart"></i>
-                    <span class="favorite-text"><?php echo $is_favorite ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?></span>
-                </button>
+                    <button type="button" 
+                            class="btn <?php echo $is_favorite ? 'btn-danger' : 'btn-outline-danger'; ?>" 
+                            onclick="toggleFavorite(this)" 
+                            data-job-id="<?php echo $job_id; ?>">
+                        <i class="fas fa-heart"></i>
+                    </button>
                 <?php endif; ?>
             </div>
             <div class="mb-3">
@@ -266,14 +264,13 @@ function formatBytes(bytes) {
 
 function toggleFavorite(button) {
     const jobId = button.dataset.jobId;
-    const isFavorite = button.dataset.isFavorite === 'true';
     
     fetch('/favorite.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: `job_id=${jobId}&is_favorite=${isFavorite}`
+        body: `job_id=${jobId}`
     })
     .then(response => response.json())
     .then(data => {
@@ -285,8 +282,6 @@ function toggleFavorite(button) {
                 button.classList.remove('btn-danger');
                 button.classList.add('btn-outline-danger');
             }
-            button.dataset.isFavorite = data.isFavorite;
-            button.querySelector('.favorite-text').textContent = data.isFavorite ? 'Retirer des favoris' : 'Ajouter aux favoris';
         } else {
             alert(data.message || 'Une erreur est survenue');
         }

@@ -26,10 +26,10 @@ $stmt = $conn->prepare("SELECT COUNT(*) FROM favorites WHERE candidate_id = ?");
 $stmt->execute([$user_id]);
 $favorites_count = $stmt->fetchColumn();
 
-// Nombre de notifications non lues
-$stmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND is_read = 0");
+// Compter les notifications non lues
+$stmt = $conn->prepare("SELECT COUNT(*) FROM notifications WHERE user_id = ? AND read_at IS NULL");
 $stmt->execute([$user_id]);
-$notifications_count = $stmt->fetchColumn();
+$unread_notifications = $stmt->fetchColumn();
 
 // Dernières candidatures
 $stmt = $conn->prepare("
@@ -93,7 +93,7 @@ $recent_favorites = $stmt->fetchAll();
                 <div class="card-body">
                     <i class="fas fa-bell fa-2x text-warning mb-3"></i>
                     <h3 class="card-title h5">Notifications</h3>
-                    <p class="display-6 fw-bold mb-0"><?php echo $notifications_count; ?></p>
+                    <p class="display-6 fw-bold mb-0"><?php echo $unread_notifications; ?></p>
                     <a href="notifications.php" class="btn btn-outline-warning mt-3">
                         Voir mes notifications
                     </a>

@@ -67,10 +67,7 @@ function verify_csrf_token($token) {
     if (!isset($_SESSION['csrf_token'])) {
         return false;
     }
-    $result = hash_equals($_SESSION['csrf_token'], $token);
-    // Régénérer le token après vérification
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    return $result;
+    return hash_equals($_SESSION['csrf_token'], $token);
 }
 
 // Fonction pour rediriger

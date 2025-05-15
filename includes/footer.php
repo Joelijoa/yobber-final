@@ -5,7 +5,7 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5>JobPortal</h5>
+                    <h5>Yobber</h5>
                     <p>Votre partenaire de confiance pour trouver votre prochain emploi.</p>
                 </div>
                 <div class="col-md-4">
@@ -28,7 +28,7 @@
             </div>
             <hr class="my-4">
             <div class="text-center">
-                <p class="mb-0">&copy; <?php echo date('Y'); ?> JobPortal. Tous droits réservés.</p>
+                <p class="mb-0">&copy; <?php echo date('Y'); ?> Yobber. Tous droits réservés.</p>
             </div>
         </div>
     </footer>

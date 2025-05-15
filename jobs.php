@@ -52,10 +52,11 @@ if (isLoggedIn() && isUserType('candidate')) {
         <div class="col-md-3">
             <select class="form-select" name="type">
                 <option value="">Type de contrat</option>
-                <option value="full-time" <?php if($type==='full-time') echo 'selected'; ?>>Temps plein</option>
-                <option value="part-time" <?php if($type==='part-time') echo 'selected'; ?>>Temps partiel</option>
-                <option value="contract" <?php if($type==='contract') echo 'selected'; ?>>Contrat</option>
-                <option value="internship" <?php if($type==='internship') echo 'selected'; ?>>Stage</option>
+                <option value="CDI" <?php if($type==='CDI') echo 'selected'; ?>>CDI</option>
+                <option value="CDD" <?php if($type==='CDD') echo 'selected'; ?>>CDD</option>
+                <option value="Alternance" <?php if($type==='Alternance') echo 'selected'; ?>>Alternance</option>
+                <option value="Stage" <?php if($type==='Stage') echo 'selected'; ?>>Stage</option>
+                <option value="Freelance" <?php if($type==='Freelance') echo 'selected'; ?>>Freelance</option>
             </select>
         </div>
         <div class="col-md-2 d-grid">
@@ -93,12 +94,13 @@ if (isLoggedIn() && isUserType('candidate')) {
                         <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
                             <a href="job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-outline-primary btn-sm">Voir plus</a>
                             <?php if (isLoggedIn() && isUserType('candidate')): ?>
-                                <form method="post" action="favorite.php" class="d-inline">
-                                    <input type="hidden" name="job_id" value="<?php echo $job['id']; ?>">
-                                    <button type="submit" class="btn btn-link p-0 ms-2" title="Ajouter aux favoris">
-                                        <i class="fa<?php echo in_array($job['id'], $favorites) ? 's' : 'r'; ?> fa-heart text-danger"></i>
-                                    </button>
-                                </form>
+                                <button type="button" 
+                                        onclick="toggleFavorite(this)" 
+                                        class="btn btn-link p-0 ms-2" 
+                                        data-job-id="<?php echo $job['id']; ?>" 
+                                        title="<?php echo in_array($job['id'], $favorites) ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
+                                    <i class="fa<?php echo in_array($job['id'], $favorites) ? 's' : 'r'; ?> fa-heart text-danger"></i>
+                                </button>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -111,6 +113,61 @@ if (isLoggedIn() && isUserType('candidate')) {
         <?php endif; ?>
     </div>
 </div>
+
+<!-- Toast pour les notifications -->
+<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+    <div id="favoriteToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="fas fa-heart me-2 text-danger"></i>
+            <strong class="me-auto">Favoris</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage"></div>
+    </div>
+</div>
+
+<script>
+function toggleFavorite(button) {
+    const jobId = button.getAttribute('data-job-id');
+    
+    fetch('/public/favorite.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: `job_id=${jobId}`
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Mettre à jour l'icône du bouton
+            const icon = button.querySelector('i');
+            if (data.action === 'added') {
+                icon.classList.remove('far');
+                icon.classList.add('fas');
+                button.classList.add('active');
+            } else {
+                icon.classList.remove('fas');
+                icon.classList.add('far');
+                button.classList.remove('active');
+            }
+
+            // Afficher le toast
+            const toast = new bootstrap.Toast(document.getElementById('favoriteToast'));
+            document.getElementById('toastMessage').textContent = data.message;
+            toast.show();
+        } else {
+            // En cas d'erreur
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Erreur:', error);
+        alert('Une erreur est survenue lors de la mise à jour des favoris.');
+    });
+}
+</script>
+
 <?php require_once __DIR__ . '/includes/footer.php'; ?>
 <style>
 .company-logo-placeholder {

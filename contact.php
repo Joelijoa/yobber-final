@@ -2,7 +2,7 @@
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/includes/header.php';
 
-$page_title = "Contact - JobPortal";
+$page_title = "Contact - Yobber";
 
 // Traitement du formulaire de contact
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     if (empty($errors)) {
         // Envoi de l'email (à implémenter)
-        $to = "contact@jobportal.com";
+        $to = "contact@yobber.com";
         $headers = "From: $email\r\n";
         $headers .= "Reply-To: $email\r\n";
         $headers .= "Content-Type: text/html; charset=UTF-8\r\n";
@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p>" . nl2br(htmlspecialchars($message)) . "</p>
         ";
         
-        if (mail($to, "Contact JobPortal: $subject", $email_body, $headers)) {
+        if (mail($to, "Contact Yobber: $subject", $email_body, $headers)) {
             $_SESSION['flash_message'] = "Votre message a été envoyé avec succès. Nous vous répondrons dans les plus brefs délais.";
             $_SESSION['flash_type'] = "success";
             header("Location: contact.php");
@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="lead mb-4">Nous sommes là pour vous aider. N'hésitez pas à nous contacter pour toute question.</p>
             </div>
             <div class="col-lg-6">
-                <img src="../assets/images/contact-hero.svg" alt="Contact Us" class="img-fluid">
+                <img src="assets/images/contact.png" alt="Contact Us" class="img-fluid">
             </div>
         </div>
     </div>
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </li>
                                 <li class="mb-3">
                                     <i class="fas fa-envelope text-primary me-2"></i>
-                                    contact@jobportal.com
+                                    contact@yobber.com
                                 </li>
                             </ul>
                         </div>

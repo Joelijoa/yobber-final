@@ -41,7 +41,7 @@ try {
             END as status_fr
         FROM applications a
         JOIN jobs j ON a.job_id = j.id
-        WHERE a.id = :application_id AND a.candidate_id = :user_id
+        WHERE a.id = :application_id AND a.user_id = :user_id
     ";
 
     $stmt = $conn->prepare($query);

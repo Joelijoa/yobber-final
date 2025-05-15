@@ -6,13 +6,18 @@ requireAccess('candidate', '/auth/login.php');
 
 $user_id = getUserId();
 
-// Récupérer toutes les candidatures du candidat
+// Récupérer les candidatures
 $stmt = $conn->prepare("
-    SELECT a.*, j.title as job_title, j.company_name, j.location, j.type as job_type,
-           DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date
-    FROM applications a
-    JOIN jobs j ON a.job_id = j.id
-    WHERE a.candidate_id = ?
+    SELECT 
+        a.*,
+        j.title as job_title,
+        j.company_name,
+        j.location,
+        j.type as job_type,
+        DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date
+    FROM applications a 
+    JOIN jobs j ON a.job_id = j.id 
+    WHERE a.user_id = ? 
     ORDER BY a.created_at DESC
 ");
 $stmt->execute([$user_id]);
@@ -51,7 +56,7 @@ $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php foreach ($applications as $application): ?>
                         <tr>
                             <td>
-                                <a href="/job-details.php?id=<?php echo $application['job_id']; ?>">
+                                <a href="/public/jobs/details.php?id=<?php echo htmlspecialchars($application['job_id']); ?>">
                                     <?php echo htmlspecialchars($application['job_title']); ?>
                                 </a>
                             </td>
@@ -62,7 +67,7 @@ $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <?php echo htmlspecialchars($application['job_type']); ?>
                                 </span>
                             </td>
-                            <td><?php echo $application['application_date']; ?></td>
+                            <td><?php echo htmlspecialchars($application['application_date']); ?></td>
                             <td>
                                 <?php
                                 $status_classes = [
@@ -77,21 +82,32 @@ $applications = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     'accepted' => 'Acceptée',
                                     'rejected' => 'Refusée'
                                 ];
+                                $status = $application['status'] ?? 'pending';
                                 ?>
-                                <span class="badge <?php echo $status_classes[$application['status']]; ?>">
-                                    <?php echo $status_labels[$application['status']]; ?>
+                                <span class="badge <?php echo $status_classes[$status]; ?>">
+                                    <?php echo $status_labels[$status]; ?>
                                 </span>
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="/uploads/applications/<?php echo $application['job_id']; ?>/<?php echo $user_id; ?>/<?php echo basename($application['cv_path']); ?>" 
-                                       class="btn btn-sm btn-outline-primary" target="_blank">
-                                        <i class="fas fa-file-pdf"></i> CV
+                                    <a href="/public/candidate/view_application.php?id=<?php echo htmlspecialchars($application['id']); ?>" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> Voir
                                     </a>
-                                    <a href="/uploads/applications/<?php echo $application['job_id']; ?>/<?php echo $user_id; ?>/<?php echo basename($application['cover_letter_path']); ?>" 
-                                       class="btn btn-sm btn-outline-primary" target="_blank">
-                                        <i class="fas fa-file-alt"></i> LM
-                                    </a>
+                                    <?php if (!empty($application['cv_path'])): ?>
+                                        <a href="<?php echo htmlspecialchars($application['cv_path']); ?>" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           target="_blank">
+                                            <i class="fas fa-file-pdf"></i> CV
+                                        </a>
+                                    <?php endif; ?>
+                                    <?php if (!empty($application['cover_letter_path'])): ?>
+                                        <a href="<?php echo htmlspecialchars($application['cover_letter_path']); ?>" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           target="_blank">
+                                            <i class="fas fa-file-alt"></i> LM
+                                        </a>
+                                    <?php endif; ?>
                                 </div>
                             </td>
                         </tr>

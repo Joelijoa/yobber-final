@@ -9,14 +9,46 @@ error_reporting(E_ALL);
 
 // Redirection si déjà connecté
 if (isLoggedIn()) {
-    redirect('/index.php');
+    redirect('/public/index.php');
     exit;
 }
 
 // Détection du type d'inscription
 $user_type = $_GET['type'] ?? '';
 if (!in_array($user_type, ['candidate', 'recruiter'])) {
-    redirect('/auth/register.php?type=candidate');
+    redirect('/public/auth/register.php?type=candidate');
+    exit;
+}
+
+// Si aucun type n'est spécifié, afficher la page de choix
+if (empty($user_type)) {
+    ?>
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h2 class="mb-4">Choisissez votre type de compte</h2>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <a href="/public/auth/register.php?type=candidate" class="btn btn-primary btn-lg w-100 mb-3">
+                                    <i class="fas fa-user-graduate me-2"></i>
+                                    Je suis un candidat
+                                </a>
+                            </div>
+                            <div class="col-md-6">
+                                <a href="/public/auth/register.php?type=recruiter" class="btn btn-secondary btn-lg w-100 mb-3">
+                                    <i class="fas fa-building me-2"></i>
+                                    Je suis un recruteur
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php
     exit;
 }
 
@@ -74,26 +106,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // Enregistrement si pas d'erreur
                 if (!$errors) {
                     $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
+                    $stmt->execute([$email]);
                     if ($stmt->fetch()) {
                         $errors[] = "Cet email est déjà utilisé.";
-        } else {
+                    } else {
                         $pdo->beginTransaction();
                         try {
                             $stmt = $pdo->prepare("INSERT INTO users (email, password, type, first_name, last_name, phone, country, city) 
                                 VALUES (?, ?, 'candidate', ?, ?, ?, ?, ?)");
-            $stmt->execute([
-                $email,
-                password_hash($password, PASSWORD_DEFAULT),
-                $first_name,
-                $last_name,
+                            $stmt->execute([
+                                $email,
+                                password_hash($password, PASSWORD_DEFAULT),
+                                $first_name,
+                                $last_name,
                                 $phone,
                                 $country,
                                 $city
                             ]);
                             $user_id = $pdo->lastInsertId();
                             
-                            $stmt = $pdo->prepare("INSERT INTO candidate_profiles (user_id, education_level, education_type, study_field) VALUES (?, ?, ?, ?)");
+                            $stmt = $pdo->prepare("INSERT INTO candidates (user_id, education_level, education_type, study_field) VALUES (?, ?, ?, ?)");
                             $stmt->execute([$user_id, $education_level, $education_type, $study_field]);
                             
                             // Générer et sauvegarder le code de vérification
@@ -126,12 +158,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if(mail($to, $subject, $message, $headers)) {
                                 error_log("Email envoyé avec succès à " . $email);
                                 // Redirection vers la page de vérification
-                                redirect('/auth/verify.php?email=' . urlencode($email));
+                                redirect('/public/auth/verify.php?email=' . urlencode($email));
                             } else {
                                 error_log("Échec de l'envoi de l'email à " . $email);
                                 error_log("Erreur mail() : " . error_get_last()['message']);
                                 // On redirige quand même vers la page de vérification
-                                redirect('/auth/verify.php?email=' . urlencode($email));
+                                redirect('/public/auth/verify.php?email=' . urlencode($email));
                             }
                         } catch (Exception $e) {
                             $pdo->rollBack();
@@ -196,9 +228,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $stmt = $pdo->prepare("INSERT INTO email_verifications (user_id, code, created_at) VALUES (?, ?, NOW())");
                         $stmt->execute([$user_id, $verification_code]);
                         
-            $_SESSION['user_id'] = $user_id;
+                        $_SESSION['user_id'] = $user_id;
                         $_SESSION['user_type'] = 'recruiter';
-            $_SESSION['user_email'] = $email;
+                        $_SESSION['user_email'] = $email;
                         $_SESSION['user_name'] = $rep_first_name . ' ' . $rep_last_name;
                         
                         // Envoi de l'email avec le code
@@ -213,25 +245,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         mail($to, $subject, $message, $headers);
                         
                         // Redirection vers la page de vérification
-                        redirect('/auth/verify.php?email=' . urlencode($email));
+                        redirect('/public/auth/verify.php?email=' . urlencode($email));
                     }
                 }
             }
-        } catch (PDOException $e) {
-            $errors[] = "Erreur de base de données : " . $e->getMessage();
+        } catch (Exception $e) {
+            $errors[] = "Une erreur est survenue : " . $e->getMessage();
+            error_log("Erreur d'inscription : " . $e->getMessage());
         }
     }
 }
+
+// Affichage du formulaire approprié selon le type d'utilisateur
+$page_title = ($user_type === 'candidate') ? "Inscription Candidat" : "Inscription Recruteur";
 ?>
 
 <!-- Register Section -->
 <section class="register-section py-5">
     <div class="container">
         <div class="row justify-content-center">
-            <div class="col-md-10 col-lg-9">
+            <div class="col-md-8">
                 <div class="card shadow-sm">
                     <div class="card-body p-4">
-                        <h1 class="h3 text-center mb-4">Inscription <?php echo $user_type === 'recruiter' ? 'Entreprise' : ($user_type === 'candidate' ? 'Candidat' : ''); ?></h1>
+                        <h1 class="h3 text-center mb-4">
+                            <?php echo $page_title; ?>
+                        </h1>
+                        
                         <?php if (!empty($errors)): ?>
                             <div class="alert alert-danger">
                                 <ul class="mb-0">
@@ -241,15 +280,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 </ul>
                             </div>
                         <?php endif; ?>
-                        <div class="mb-4 d-flex justify-content-center gap-3">
-                            <a href="register.php?type=candidate" class="btn btn-outline-primary <?php if($user_type==='candidate') echo 'active'; ?>">Candidat</a>
-                            <a href="register.php?type=recruiter" class="btn btn-outline-primary <?php if($user_type==='recruiter') echo 'active'; ?>">Entreprise</a>
-                        </div>
-                        <?php if ($user_type === 'candidate'): ?>
-                            <?php $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); ?>
-                            <form method="post" action="/auth/register.php?type=candidate">
-                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                                <input type="hidden" name="user_type" value="candidate">
+
+                        <form method="POST" action="/public/auth/register.php?type=<?php echo htmlspecialchars($user_type); ?>" class="needs-validation" novalidate>
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()); ?>">
+                            
+                            <?php if ($user_type === 'candidate'): ?>
+                                <!-- Formulaire candidat -->
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Civilité *</label>
@@ -315,15 +351,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                             <option value="BAC5" <?php if(($_POST['education_level'] ?? '')==='BAC5') echo 'selected'; ?>>Bac+5</option>
                                         </select>
                                     </div>
-                                    <div class="col-12 d-grid">
-                                        <button type="submit" class="btn btn-primary">S'inscrire</button>
-                                    </div>
                                 </div>
-                            </form>
-                        <?php elseif ($user_type === 'recruiter'): ?>
-                            <form method="post" action="/auth/register.php?type=recruiter">
-                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()); ?>">
-                                <input type="hidden" name="user_type" value="recruiter">
+                            <?php else: ?>
+                                <!-- Formulaire recruteur -->
                                 <div class="row">
                                     <div class="col-md-6">
                                         <label class="form-label">Nom de la société *</label>
@@ -345,51 +375,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                     <div class="col-md-6">
                                         <label class="form-label">Prénom du représentant *</label>
                                         <input type="text" class="form-control" name="rep_first_name" value="<?php echo htmlspecialchars($_POST['rep_first_name'] ?? ''); ?>" required>
-                                </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Date de création *</label>
                                         <input type="date" class="form-control" name="creation_date" value="<?php echo htmlspecialchars($_POST['creation_date'] ?? ''); ?>" required>
-                            </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Numéro de téléphone *</label>
                                         <input type="text" class="form-control" name="phone" value="<?php echo htmlspecialchars($_POST['phone'] ?? ''); ?>" required>
-                        </div>
-                                <div class="col-md-6">
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Email *</label>
                                         <input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($_POST['email'] ?? ''); ?>" required>
-                                </div>
-                                <div class="col-md-6">
+                                    </div>
+                                    <div class="col-md-6">
                                         <label class="form-label">Mot de passe *</label>
                                         <input type="password" class="form-control" name="password" required>
-                                </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Pays *</label>
                                         <input type="text" class="form-control" name="country" value="<?php echo htmlspecialchars($_POST['country'] ?? ''); ?>" required>
-                            </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Ville *</label>
                                         <input type="text" class="form-control" name="city" value="<?php echo htmlspecialchars($_POST['city'] ?? ''); ?>" required>
-                            </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Forme juridique *</label>
                                         <input type="text" class="form-control" name="legal_form" value="<?php echo htmlspecialchars($_POST['legal_form'] ?? ''); ?>" required>
-                            </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Type de société *</label>
                                         <input type="text" class="form-control" name="company_type" value="<?php echo htmlspecialchars($_POST['company_type'] ?? ''); ?>" required>
-                            </div>
+                                    </div>
                                     <div class="col-md-6">
                                         <label class="form-label">Domaine d'activité *</label>
                                         <input type="text" class="form-control" name="activity_field" value="<?php echo htmlspecialchars($_POST['activity_field'] ?? ''); ?>" required>
-                            </div>
-                                    <div class="col-12 d-grid">
-                                        <button type="submit" class="btn btn-primary">S'inscrire</button>
-                            </div>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                            
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i class="fas fa-user-plus me-2"></i>S'inscrire
+                            </button>
+                        </form>
+                        
+                        <div class="text-center mt-3">
+                            <p class="mb-0">
+                                Déjà inscrit ?
+                                <a href="/public/auth/login.php" class="text-decoration-none">Connectez-vous</a>
+                            </p>
                         </div>
-                            </form>
-                        <?php else: ?>
-                            <div class="alert alert-info text-center">Veuillez choisir un type d'inscription pour commencer.</div>
-                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -400,8 +436,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <style>
 .register-section {
     min-height: calc(100vh - 200px);
-    display: flex;
-    align-items: center;
 }
 
 .card {
@@ -409,32 +443,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     border-radius: 1rem;
 }
 
-.account-type-card {
-    background: white;
-    border: 2px solid var(--background-light);
-    border-radius: 1rem;
-    padding: 1.5rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.3s ease;
+.input-group-text {
+    border-radius: 0.5rem 0 0 0.5rem;
 }
 
-.account-type-card:hover {
-    border-color: var(--primary-color);
-}
-
-.account-type-card.selected {
-    border-color: var(--primary-color);
-    background-color: var(--background-light);
+.input-group .form-control {
+    border-radius: 0 0.5rem 0.5rem 0;
 }
 
 .btn {
     padding: 0.75rem 1.5rem;
     border-radius: 0.5rem;
-}
-
-.social-login .btn {
-    flex: 1;
 }
 </style>
 

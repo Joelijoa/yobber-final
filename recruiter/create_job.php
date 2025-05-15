@@ -17,7 +17,7 @@ try {
     $conn = $database->getConnection();
 } catch (PDOException $e) {
     set_flash_message('error', 'Erreur de connexion à la base de données.');
-    redirect('/recruiter/jobs.php');
+    redirect('../recruiter/jobs.php');
     exit;
 }
 
@@ -73,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $conn->commit();
         
         set_flash_message('success', "L'offre d'emploi a été créée avec succès !");
-        redirect('/recruiter/jobs.php');
+        header('Location: /public/recruiter/jobs.php');
         exit;
 
     } catch (Exception $e) {

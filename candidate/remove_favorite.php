@@ -17,22 +17,23 @@ $user_id = $_SESSION['user_id'];
 $job_id = $_POST['job_id'];
 
 try {
-    // Vérifier que le favori appartient bien au candidat
+    // Vérifier si le favori existe et appartient à l'utilisateur
     $stmt = $conn->prepare("
-        SELECT * FROM favorites 
-        WHERE job_id = ? AND candidate_id = ?
+        SELECT id 
+        FROM favorites 
+        WHERE job_id = ? AND user_id = ?
     ");
     $stmt->execute([$job_id, $user_id]);
-    
-    if ($stmt->rowCount() === 0) {
-        throw new Exception("Favori non trouvé.");
+
+    if ($stmt->fetch()) {
+        // Supprimer le favori
+        $stmt = $conn->prepare("DELETE FROM favorites WHERE job_id = ? AND user_id = ?");
+        $stmt->execute([$job_id, $user_id]);
+        
+        set_flash_message('success', 'L\'offre a été retirée de vos favoris.');
+    } else {
+        set_flash_message('error', 'Cette offre n\'est pas dans vos favoris.');
     }
-
-    // Supprimer le favori
-    $stmt = $conn->prepare("DELETE FROM favorites WHERE job_id = ? AND candidate_id = ?");
-    $stmt->execute([$job_id, $user_id]);
-
-    $_SESSION['success_message'] = "L'offre a été retirée de vos favoris.";
 } catch (Exception $e) {
     $_SESSION['error_message'] = "Erreur lors de la suppression du favori : " . $e->getMessage();
 }

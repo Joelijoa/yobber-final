@@ -55,14 +55,14 @@ try {
                         </div>
                         <div class="col-md-2">
                             <button type="submit" class="btn btn-primary w-100">
-                                <i class="fas fa-search me-2"></i>Rechercher
+                                <i class="fas fa-search me-2"></i>
                             </button>
                         </div>
                     </form>
                 </div>
             </div>
             <div class="col-lg-6 d-none d-lg-block">
-                <img src="assets/images/hero-image.svg" alt="Job Search" class="img-fluid">
+                <img src="assets/images/job-image.jpg" alt="Job Search" class="img-fluid">
             </div>
         </div>
     </div>
@@ -158,10 +158,10 @@ try {
 <section class="cta-section py-5 bg-primary text-white">
     <div class="container text-center">
         <h2 class="mb-4">Prêt à trouver votre prochain emploi ?</h2>
-        <p class="lead mb-4">Rejoignez des milliers de candidats et recruteurs sur JobPortal.</p>
+        <p class="lead mb-4">Rejoignez des milliers de candidats et recruteurs sur Yobber.</p>
         <div class="d-flex justify-content-center gap-3">
-            <a href="/auth/register.php?type=candidate" class="btn btn-light btn-lg">Je cherche un emploi</a>
-            <a href="/auth/register.php?type=recruiter" class="btn btn-outline-light btn-lg">Je recrute</a>
+            <a href="/public/auth/register.php?type=candidate" class="btn btn-light btn-lg">Je cherche un emploi</a>
+            <a href="/public/auth/register.php?type=recruiter" class="btn btn-outline-light btn-lg">Je recrute</a>
         </div>
     </div>
 </section>

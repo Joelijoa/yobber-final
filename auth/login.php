@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['csrf_token'])) {
         error_log('CSRF token missing');
         set_flash_message('error', get_error_message('invalid_request'));
-        redirect('/auth/login.php');
+        redirect('/public/auth/login.php');
         exit;
     }
 
@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($errors)) {
         try {
             // Vérification des identifiants
-            $stmt = $conn->prepare("SELECT id, email, password, first_name, last_name, type 
+            $stmt = $conn->prepare("SELECT id, email, password, first_name, last_name, user_type 
                      FROM users 
                      WHERE email = ?");
             $stmt->execute([$email]);
@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             if ($user && password_verify($password, $user['password'])) {
                 // Connexion réussie
-                loginUser($user['id'], $user['type']);
+                loginUser($user['id'], $user['user_type']);
                 $_SESSION['user_email'] = $user['email'];
                 $_SESSION['user_name'] = $user['first_name'] . ' ' . $user['last_name'];
                 
@@ -66,12 +66,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 
                 // Redirection selon le type d'utilisateur
-                if ($user['type'] === 'candidate') {
-                    redirect('/candidate/dashboard.php');
-                } elseif ($user['type'] === 'recruiter') {
-                    redirect('/recruiter/dashboard.php');
+                if ($user['user_type'] === 'candidate') {
+                    redirect('/public/candidate/dashboard.php');
+                } elseif ($user['user_type'] === 'recruiter') {
+                    redirect('/public/recruiter/dashboard.php');
                 } else {
-                    redirect('/admin/dashboard.php');
+                    redirect('/public/admin/dashboard.php');
                 }
                 exit;
             } else {
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </div>
                         <?php endif; ?>
                         
-                        <form method="POST" action="/auth/login.php" class="needs-validation" novalidate>
+                        <form method="POST" action="/public/auth/login.php" class="needs-validation" novalidate>
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()); ?>">
                             <div class="mb-3">
                                 <label for="email" class="form-label">Email</label>
@@ -136,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             </button>
                             
                             <div class="text-center">
-                                <a href="forgot-password.php" class="text-decoration-none">Mot de passe oublié ?</a>
+                                <a href="/public/auth/forgot-password.php" class="text-decoration-none">Mot de passe oublié ?</a>
                             </div>
                         </form>
                         
@@ -162,7 +162,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="text-center mt-4">
                     <p class="mb-0">
                         Vous n'avez pas de compte ?
-                        <a href="/auth/register.php" class="text-decoration-none">Inscrivez-vous</a>
+                        <a href="/public/auth/register.php" class="text-decoration-none">Inscrivez-vous</a>
                     </p>
                 </div>
             </div>

@@ -61,7 +61,7 @@ $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     Ajouté aux favoris le <?php echo $job['favorite_date']; ?>
                                 </small>
                                 <div class="btn-group">
-                                    <a href="/job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-sm btn-primary">
+                                    <a href="../job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-sm btn-primary">
                                         Voir détails
                                     </a>
                                     <button type="button" 
@@ -84,7 +84,7 @@ $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
 function toggleFavorite(button) {
     const jobId = button.dataset.jobId;
     
-    fetch('/favorite.php', {
+    fetch('../favorite.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

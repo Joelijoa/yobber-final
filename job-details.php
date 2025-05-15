@@ -11,7 +11,11 @@ if (!$job_id) {
 
 // Récupérer les infos de l'offre
 $stmt = $conn->prepare("
-    SELECT j.*, r.company_name, r.company_logo, r.company_description, j.recruiter_id as recruiter_user_id 
+    SELECT j.*, 
+           COALESCE(r.company_name, j.company_name) as company_name,
+           r.company_logo, 
+           r.company_description, 
+           j.recruiter_id as recruiter_user_id 
     FROM jobs j 
     LEFT JOIN recruiter_profiles r ON j.recruiter_id = r.user_id 
     WHERE j.id = ? AND j.status = 'active' 
@@ -36,7 +40,7 @@ if (isLoggedIn() && isUserType('candidate')) {
 
 // Gestion de la candidature
 $success = '';
-$error = '';
+$errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candidate')) {
     try {
         // Vérifier si déjà candidat
@@ -48,59 +52,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
 
         // Vérifier les fichiers
         if (!isset($_FILES['cv']) || $_FILES['cv']['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception('Le CV est requis et doit être au format PDF.');
+            $errors[] = 'Le CV est requis et doit être au format PDF.';
         }
         if (!isset($_FILES['cover_letter']) || $_FILES['cover_letter']['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception('La lettre de motivation est requise et doit être au format PDF.');
+            $errors[] = 'La lettre de motivation est requise et doit être au format PDF.';
         }
 
-        // Créer le dossier de destination
-        $upload_dir = __DIR__ . '/uploads/applications/' . $job_id . '/' . getUserId();
-        if (!file_exists($upload_dir)) {
-            mkdir($upload_dir, 0777, true);
+        if (empty($errors)) {
+            // Vérifier le type MIME des fichiers
+            $allowed_mime_types = ['application/pdf'];
+            $cv_mime_type = mime_content_type($_FILES['cv']['tmp_name']);
+            $cover_letter_mime_type = mime_content_type($_FILES['cover_letter']['tmp_name']);
+
+            if (!in_array($cv_mime_type, $allowed_mime_types)) {
+                $errors[] = 'Le CV doit être au format PDF.';
+            }
+            if (!in_array($cover_letter_mime_type, $allowed_mime_types)) {
+                $errors[] = 'La lettre de motivation doit être au format PDF.';
+            }
+
+            // Vérifier la taille des fichiers
+            $max_size = return_bytes(ini_get('upload_max_filesize'));
+            if ($_FILES['cv']['size'] > $max_size) {
+                $errors[] = 'Le CV dépasse la taille maximale autorisée.';
+            }
+            if ($_FILES['cover_letter']['size'] > $max_size) {
+                $errors[] = 'La lettre de motivation dépasse la taille maximale autorisée.';
+            }
         }
 
-        // Sauvegarder les fichiers
-        $cv_name = 'cv_' . uniqid() . '.pdf';
-        $cover_letter_name = 'cover_letter_' . uniqid() . '.pdf';
-        
-        move_uploaded_file($_FILES['cv']['tmp_name'], $upload_dir . '/' . $cv_name);
-        move_uploaded_file($_FILES['cover_letter']['tmp_name'], $upload_dir . '/' . $cover_letter_name);
+        if (empty($errors)) {
+            // Créer le dossier de destination
+            $upload_dir = __DIR__ . '/uploads/applications/' . $job_id . '/' . getUserId();
+            if (!file_exists($upload_dir)) {
+                mkdir($upload_dir, 0777, true);
+            }
 
-        // Insérer la candidature
-        $conn->beginTransaction();
+            // Sauvegarder les fichiers
+            $cv_name = 'cv_' . uniqid() . '.pdf';
+            $cover_letter_name = 'cover_letter_' . uniqid() . '.pdf';
+            
+            move_uploaded_file($_FILES['cv']['tmp_name'], $upload_dir . '/' . $cv_name);
+            move_uploaded_file($_FILES['cover_letter']['tmp_name'], $upload_dir . '/' . $cover_letter_name);
 
-        // Chemins relatifs pour la BD
-        $cv_path = 'uploads/applications/' . $job_id . '/' . getUserId() . '/' . $cv_name;
-        $cover_letter_path = 'uploads/applications/' . $job_id . '/' . getUserId() . '/' . $cover_letter_name;
+            // Insérer la candidature
+            $conn->beginTransaction();
 
-        // Insérer la candidature
-        $stmt = $conn->prepare("
-            INSERT INTO applications (job_id, candidate_id, cv_path, cover_letter_path, message, status, created_at)
-            VALUES (?, ?, ?, ?, ?, 'pending', NOW())
-        ");
-        $stmt->execute([$job_id, getUserId(), $cv_path, $cover_letter_path, $_POST['message'] ?? '']);
+            // Chemins relatifs pour la BD
+            $cv_path = 'uploads/applications/' . $job_id . '/' . getUserId() . '/' . $cv_name;
+            $cover_letter_path = 'uploads/applications/' . $job_id . '/' . getUserId() . '/' . $cover_letter_name;
 
-        // Créer la notification
-        if ($job['recruiter_user_id']) {
+            // Insérer la candidature
             $stmt = $conn->prepare("
-                INSERT INTO notifications (user_id, type, message, created_at)
-                VALUES (?, 'new_application', ?, NOW())
+                INSERT INTO applications (job_id, candidate_id, cv_path, cover_letter_path, message, status, created_at)
+                VALUES (?, ?, ?, ?, ?, 'pending', NOW())
             ");
-            $stmt->execute([
-                $job['recruiter_user_id'],
-                'Nouvelle candidature pour le poste : ' . $job['title']
-            ]);
-        }
+            $stmt->execute([$job_id, getUserId(), $cv_path, $cover_letter_path, $_POST['message'] ?? '']);
 
-        $conn->commit();
-        $success = 'Votre candidature a été envoyée avec succès !';
+            // Créer la notification
+            if ($job['recruiter_user_id']) {
+                $stmt = $conn->prepare("
+                    INSERT INTO notifications (user_id, type, message, created_at)
+                    VALUES (?, 'new_application', ?, NOW())
+                ");
+                $stmt->execute([
+                    $job['recruiter_user_id'],
+                    'Nouvelle candidature pour le poste : ' . $job['title']
+                ]);
+            }
+
+            $conn->commit();
+            $success = 'Votre candidature a été envoyée avec succès !';
+        }
         
     } catch (Exception $e) {
         if (isset($conn) && $conn->inTransaction()) {
             $conn->rollBack();
         }
-        $error = $e->getMessage();
+        $errors[] = $e->getMessage();
         if (DEBUG_MODE) {
             error_log('Erreur candidature : ' . $e->getMessage());
         }
@@ -137,28 +166,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
                 <h4>Profil recherché</h4>
                 <p><?php echo nl2br(htmlspecialchars($job['requirements'])); ?></p>
             </div>
-            <?php if ($job['benefits']): ?>
+            <?php if (!empty($job['benefits']) && trim($job['benefits']) !== ''): ?>
             <div class="mb-4">
                 <h4>Avantages</h4>
                 <p><?php echo nl2br(htmlspecialchars($job['benefits'])); ?></p>
             </div>
             <?php endif; ?>
             <?php if ($success): ?>
-                <div class="alert alert-success"><?php echo $success; ?></div>
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle me-2"></i>
+                    <?php echo $success; ?>
+                </div>
             <?php endif; ?>
-            <?php if ($error): ?>
-                <div class="alert alert-danger"><?php echo $error; ?></div>
+            <?php if (!empty($errors)): ?>
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    <?php 
+                    if (count($errors) === 1) {
+                        echo htmlspecialchars($errors[0]);
+                    } else {
+                        echo '<ul class="mb-0">';
+                        foreach ($errors as $error) {
+                            echo '<li>' . htmlspecialchars($error) . '</li>';
+                        }
+                        echo '</ul>';
+                    }
+                    ?>
+                </div>
             <?php endif; ?>
             <?php if (isLoggedIn() && isUserType('candidate')): ?>
                 <div class="card mb-4">
                     <div class="card-body">
                         <h5 class="card-title">Postuler à cette offre</h5>
-                        <?php if (DEBUG_MODE && isset($_FILES) && !empty($_FILES)): ?>
+                        <!-- <php if (DEBUG_MODE && isset($_FILES) && !empty($_FILES)): ?>
                             <div class="alert alert-info">
                                 <h6>Debug Information:</h6>
-                                <pre><?php print_r($_FILES); ?></pre>
+                                <pre><php print_r($_FILES); ?></pre>
                             </div>
-                        <?php endif; ?>
+                        <php endif; > -->
                         <form method="post" enctype="multipart/form-data" onsubmit="return validateForm()">
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars(generate_csrf_token()); ?>">
                             <input type="hidden" name="MAX_FILE_SIZE" value="<?php echo MAX_FILE_SIZE; ?>">
@@ -192,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
         <div class="col-lg-4">
             <div class="card mb-4">
                 <div class="card-body text-center">
-                    <?php if ($job['company_logo']): ?>
+                    <?php if (!empty($job['company_logo'])): ?>
                         <img src="<?php echo htmlspecialchars($job['company_logo']); ?>" alt="Logo <?php echo htmlspecialchars($job['company_name']); ?>" class="img-fluid mb-3" style="max-width: 120px; max-height: 120px;">
                     <?php else: ?>
                         <div class="company-placeholder mb-3">
@@ -200,19 +245,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isLoggedIn() && isUserType('candida
                         </div>
                     <?php endif; ?>
                     <h5 class="mb-2"><?php echo htmlspecialchars($job['company_name']); ?></h5>
-                    <?php if ($job['company_description']): ?>
+                    <?php if (!empty($job['company_description'])): ?>
                         <p class="text-muted small mb-0"><?php echo nl2br(htmlspecialchars($job['company_description'])); ?></p>
                     <?php endif; ?>
                 </div>
             </div>
-            <?php if ($job['salary_min'] || $job['salary_max']): ?>
+            <?php if (!empty($job['salary_min']) || !empty($job['salary_max'])): ?>
             <div class="card mb-4">
                 <div class="card-body">
                     <h6 class="mb-2">Salaire</h6>
                     <p class="mb-0">
-                        <?php if ($job['salary_min']): ?>À partir de <?php echo number_format($job['salary_min'], 0, ',', ' '); ?>€<?php endif; ?>
-                        <?php if ($job['salary_max']): ?> - Jusqu'à <?php echo number_format($job['salary_max'], 0, ',', ' '); ?>€<?php endif; ?>
+                        <?php if (!empty($job['salary_min'])): ?>À partir de <?php echo number_format($job['salary_min'], 0, ',', ' '); ?>€<?php endif; ?>
+                        <?php if (!empty($job['salary_max'])): ?> - Jusqu'à <?php echo number_format($job['salary_max'], 0, ',', ' '); ?>€<?php endif; ?>
                     </p>
+                </div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($job['requirements'])): ?>
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h6 class="mb-2"><i class="fas fa-list-check me-2"></i>Prérequis</h6>
+                    <div class="requirements-list">
+                        <?php 
+                        $requirements = explode("\n", trim($job['requirements']));
+                        if (count($requirements) > 1): ?>
+                            <ul class="list-unstyled mb-0">
+                                <?php foreach ($requirements as $requirement): ?>
+                                    <?php if (trim($requirement) !== ''): ?>
+                                        <li class="mb-2">
+                                            <i class="fas fa-check text-success me-2"></i>
+                                            <?php echo htmlspecialchars(trim($requirement)); ?>
+                                        </li>
+                                    <?php endif; ?>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php else: ?>
+                            <p class="mb-0"><?php echo nl2br(htmlspecialchars($job['requirements'])); ?></p>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>

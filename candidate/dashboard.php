@@ -8,21 +8,21 @@ $user_id = getUserId();
 
 // Récupérer les informations de l'utilisateur et son profil
 $stmt = $conn->prepare("
-    SELECT u.*, cp.* 
+    SELECT u.*, c.* 
     FROM users u 
-    LEFT JOIN candidate_profiles cp ON u.id = cp.user_id 
+    LEFT JOIN candidates c ON u.id = c.user_id 
     WHERE u.id = ?
 ");
 $stmt->execute([$user_id]);
 $user = $stmt->fetch();
 
 // Nombre de candidatures
-$stmt = $conn->prepare("SELECT COUNT(*) FROM applications WHERE candidate_id = ?");
+$stmt = $conn->prepare("SELECT COUNT(*) FROM applications WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $applications_count = $stmt->fetchColumn();
 
 // Nombre de favoris
-$stmt = $conn->prepare("SELECT COUNT(*) FROM favorites WHERE candidate_id = ?");
+$stmt = $conn->prepare("SELECT COUNT(*) FROM favorites WHERE user_id = ?");
 $stmt->execute([$user_id]);
 $favorites_count = $stmt->fetchColumn();
 
@@ -36,7 +36,7 @@ $stmt = $conn->prepare("
     SELECT a.*, j.title, j.location, j.type as job_type, j.id as job_id 
     FROM applications a 
     JOIN jobs j ON a.job_id = j.id 
-    WHERE a.candidate_id = ? 
+    WHERE a.user_id = ? 
     ORDER BY a.created_at DESC LIMIT 5
 ");
 $stmt->execute([$user_id]);
@@ -47,7 +47,7 @@ $stmt = $conn->prepare("
     SELECT f.*, j.title, j.location, j.type as job_type, j.id as job_id 
     FROM favorites f 
     JOIN jobs j ON f.job_id = j.id 
-    WHERE f.candidate_id = ? 
+    WHERE f.user_id = ? 
     ORDER BY f.created_at DESC LIMIT 5
 ");
 $stmt->execute([$user_id]);

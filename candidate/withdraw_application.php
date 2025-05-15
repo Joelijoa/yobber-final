@@ -17,11 +17,10 @@ $user_id = $_SESSION['user_id'];
 $application_id = $_POST['application_id'];
 
 try {
-    // Vérifier que la candidature appartient bien au candidat
+    // Vérifier que la candidature appartient bien au candidat et est en attente
     $stmt = $conn->prepare("
-        SELECT a.* 
-        FROM applications a
-        WHERE a.id = ? AND a.candidate_id = ? AND a.status = 'pending'
+        SELECT a.* FROM applications a
+        WHERE a.id = ? AND a.user_id = ? AND a.status = 'pending'
     ");
     $stmt->execute([$application_id, $user_id]);
     

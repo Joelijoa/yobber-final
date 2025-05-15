@@ -39,14 +39,19 @@ $stmt = $conn->prepare("
 $stmt->execute([$user_id]);
 $application_stats = $stmt->fetch(PDO::FETCH_ASSOC);
 
-// Récupérer les dernières candidatures
+// Récupérer les candidatures récentes
 $stmt = $conn->prepare("
-    SELECT a.*, j.title as job_title, 
-           c.first_name, c.last_name,
-           DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date
+    SELECT 
+        a.id as application_id,
+        a.created_at as application_date,
+        a.status as application_status,
+        j.title as job_title,
+        u.first_name,
+        u.last_name,
+        u.email
     FROM applications a
     JOIN jobs j ON a.job_id = j.id
-    JOIN candidates c ON a.candidate_id = c.user_id
+    JOIN users u ON a.candidate_id = u.id
     WHERE j.recruiter_id = ?
     ORDER BY a.created_at DESC
     LIMIT 5
@@ -159,7 +164,7 @@ $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <?php else: ?>
                         <div class="list-group">
                             <?php foreach ($recent_applications as $application): ?>
-                                <a href="view_application.php?id=<?php echo $application['id']; ?>" 
+                                <a href="view_application.php?id=<?php echo $application['application_id']; ?>" 
                                    class="list-group-item list-group-item-action">
                                     <div class="d-flex w-100 justify-content-between">
                                         <h6 class="mb-1"><?php echo htmlspecialchars($application['job_title']); ?></h6>
@@ -171,7 +176,7 @@ $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <small class="text-muted">
                                         Statut : 
                                         <span class="badge bg-<?php 
-                                            echo match($application['status']) {
+                                            echo match($application['application_status']) {
                                                 'pending' => 'warning',
                                                 'reviewed' => 'info',
                                                 'accepted' => 'success',
@@ -179,7 +184,7 @@ $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                                 default => 'secondary'
                                             };
                                         ?>">
-                                            <?php echo $application['status']; ?>
+                                            <?php echo $application['application_status']; ?>
                                         </span>
                                     </small>
                                 </a>

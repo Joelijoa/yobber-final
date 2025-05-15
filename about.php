@@ -1,5 +1,5 @@
 <?php
-$page_title = "À propos - JobPortal";
+$page_title = "À propos - Yobber";
 require_once './includes/header.php';
 ?>
 
@@ -8,11 +8,11 @@ require_once './includes/header.php';
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <h1 class="display-4 fw-bold mb-4">À propos de JobPortal</h1>
+                <h1 class="display-4 fw-bold mb-4">À propos de Yobber</h1>
                 <p class="lead mb-4">Votre partenaire de confiance pour la recherche d'emploi et le recrutement.</p>
             </div>
             <div class="col-lg-6">
-                <img src="../assets/images/about-hero.svg" alt="About JobPortal" class="img-fluid">
+                <img src="../assets/images/about-hero.svg" alt="About Yobber" class="img-fluid">
             </div>
         </div>
     </div>

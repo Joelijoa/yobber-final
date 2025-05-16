@@ -1,11 +1,32 @@
-# JobPortal - Plateforme de Recrutement
+# Yobber - Plateforme de Recrutement
 
 Une plateforme moderne de recrutement développée en PHP avec MySQL, permettant aux candidats de trouver des offres d'emploi et aux recruteurs de publier leurs offres.
+
+## Dernières Mises à Jour
+
+### Interface Recruteur
+- Amélioration du tableau de bord avec des statistiques en temps réel
+- Optimisation de l'affichage des cartes de statistiques pour une meilleure lisibilité
+- Correction des redirections pour une navigation plus fluide
+- Amélioration de la gestion des offres d'emploi (création, modification, suppression)
+- Système de notification amélioré pour les réponses aux candidatures
+
+### Interface Candidat
+- Amélioration du système de notifications avec marquage automatique des notifications lues
+- Optimisation de l'affichage des candidatures
+- Correction des liens de documents dans les candidatures
+- Amélioration de la gestion des favoris
+
+### Améliorations Générales
+- Optimisation des performances de la base de données
+- Correction des chemins de redirection pour une meilleure navigation
+- Amélioration de l'interface utilisateur et de l'expérience utilisateur
+- Correction des bugs de redirection et de gestion des sessions
 
 ## Structure du Projet
 
 ```
-jobportal/
+yobber/
 ├── admin/                      # Interface d'administration
 │   ├── dashboard.php          # Tableau de bord admin
 │   ├── users/                 # Gestion des utilisateurs
@@ -94,7 +115,7 @@ jobportal/
 
 1. Clonez le dépôt :
 ```bash
-git clone https://github.com/votre-username/jobportal.git
+git clone https://github.com/Joelijoa/yobber-final.git
 cd jobportal
 ```
 
@@ -138,3 +159,7 @@ Les contributions sont les bienvenues ! N'hésitez pas à :
 ## Licence
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
+
+## Support
+
+Pour toute question ou problème, veuillez ouvrir une issue sur GitHub. 

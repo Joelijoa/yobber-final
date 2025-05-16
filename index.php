@@ -62,7 +62,7 @@ try {
                 </div>
             </div>
             <div class="col-lg-6 d-none d-lg-block">
-                <img src="assets/images/job-image.jpg" alt="Job Search" class="img-fluid">
+                <img src="assets/images/job-image.png" alt="Job Search" class="img-fluid">
             </div>
         </div>
     </div>
@@ -155,7 +155,7 @@ try {
 </section>
 
 <!-- Call to Action -->
-<section class="cta-section py-5 bg-primary text-white">
+<section class="cta-section py-5 text-white">
     <div class="container text-center">
         <h2 class="mb-4">Prêt à trouver votre prochain emploi ?</h2>
         <p class="lead mb-4">Rejoignez des milliers de candidats et recruteurs sur Yobber.</p>

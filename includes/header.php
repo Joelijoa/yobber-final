@@ -18,14 +18,17 @@ function url($path) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo $page_title ?? 'Yobber'; ?></title>
-    
-    <!-- Bootstrap 5 CSS -->
+    <title>Yobber - Trouvez votre prochain emploi</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="<?php echo url('assets/css/style.css'); ?>">
+    <link rel="stylesheet" href="/public/assets/css/style.css">
     
     <?php if (isset($extra_css)): ?>
         <?php foreach ($extra_css as $css): ?>
@@ -35,16 +38,14 @@ function url($path) {
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light bg-white fixed-top shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white sticky-top">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="<?php echo url('index.php'); ?>">
-            <i class="fa-solid fa-user-tie"></i> Yobber
+            <a class="navbar-brand" href="<?php echo url('index.php'); ?>">
+                <i class="fa-solid fa-person-walking-luggage"></i> Yobber
             </a>
-            
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
-            
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
@@ -70,45 +71,66 @@ function url($path) {
                 </ul>
 
                 <?php if (isLoggedIn()): ?>
-                    <!-- Menu utilisateur connecté -->
-                    <div class="dropdown">
-                        <button class="btn btn-link dropdown-toggle text-dark text-decoration-none" type="button" id="userMenu" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i><?php echo htmlspecialchars(getCurrentUser()['first_name'] . ' ' . getCurrentUser()['last_name']); ?>
-                        </button>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <?php if (isUserType('candidate')): ?>
-                                <li><a class="dropdown-item" href="<?php echo url('candidate/dashboard.php'); ?>">Tableau de bord</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('candidate/profile.php'); ?>">Mon profil</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('candidate/applications.php'); ?>">Mes candidatures</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('candidate/favorites.php'); ?>">Favoris</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo url('auth/logout.php'); ?>">Déconnexion</a></li>
-                            <?php elseif (isUserType('recruiter')): ?>
-                                <li><a class="dropdown-item" href="<?php echo url('recruiter/dashboard.php'); ?>">Tableau de bord</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('recruiter/profile.php'); ?>">Profil entreprise</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('recruiter/jobs.php'); ?>">Mes offres</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('recruiter/applications.php'); ?>">Candidatures</a></li>
-                                <li><a class="dropdown-item" href="<?php echo url('recruiter/received-applications.php'); ?>">
-                                    <i class="fas fa-file-alt me-2"></i>CV reçus
-                                </a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="<?php echo url('auth/logout.php'); ?>">Déconnexion</a></li>
-                            <?php endif; ?>
-                        </ul>
-                    </div>
+                <!-- Menu utilisateur connecté -->
+                <div class="dropdown">
+                    <button class="btn btn-link dropdown-toggle text-dark text-decoration-none" type="button" id="userMenu" data-bs-toggle="dropdown">
+                        <i class="fas fa-user-circle me-1"></i><?php echo htmlspecialchars(getCurrentUser()['first_name'] . ' ' . getCurrentUser()['last_name']); ?>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end">
+                        <?php if (isUserType('candidate')): ?>
+                            <li><a class="dropdown-item" href="<?php echo url('candidate/dashboard.php'); ?>">
+                                <i class="fas fa-columns me-2"></i>Tableau de bord
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('candidate/profile.php'); ?>">
+                                <i class="fas fa-user me-2"></i>Mon profil
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('candidate/applications.php'); ?>">
+                                <i class="fas fa-file-alt me-2"></i>Mes candidatures
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('candidate/favorites.php'); ?>">
+                                <i class="fas fa-heart me-2"></i>Favoris
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout.php'); ?>">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a></li>
+                        <?php elseif (isUserType('recruiter')): ?>
+                            <li><a class="dropdown-item" href="<?php echo url('recruiter/dashboard.php'); ?>">
+                                <i class="fas fa-columns me-2"></i>Tableau de bord
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('recruiter/profile.php'); ?>">
+                                <i class="fas fa-building me-2"></i>Profil entreprise
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('recruiter/jobs.php'); ?>">
+                                <i class="fas fa-list me-2"></i>Mes offres
+                            </a></li>
+                            <li><a class="dropdown-item" href="<?php echo url('recruiter/applications.php'); ?>">
+                                <i class="fas fa-users me-2"></i>Candidatures
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="<?php echo url('auth/logout.php'); ?>">
+                                <i class="fas fa-sign-out-alt me-2"></i>Déconnexion
+                            </a></li>
+                        <?php endif; ?>
+                    </ul>
+                </div>
                 <?php else: ?>
-                    <!-- Boutons de connexion/inscription -->
-                    <div class="d-flex gap-2">
-                        <a href="<?php echo url('auth/login.php'); ?>" class="btn btn-outline-primary">Connexion</a>
-                        <a href="<?php echo url('auth/register.php'); ?>" class="btn btn-primary">Inscription</a>
-                    </div>
+                <!-- Boutons de connexion/inscription -->
+                <div class="d-flex gap-2">
+                    <a href="<?php echo url('auth/login.php'); ?>" class="btn btn-outline-primary">
+                        <i class="fas fa-sign-in-alt me-1"></i>Connexion
+                    </a>
+                    <a href="<?php echo url('auth/register.php'); ?>" class="btn btn-primary">
+                        <i class="fas fa-user-plus text-white me-1"></i>Inscription
+                    </a>
+                </div>
                 <?php endif; ?>
             </div>
         </div>
     </nav>
 
     <!-- Contenu principal -->
-    <main class="container mt-5 pt-4">
+    <main class="container mt-3">
         <?php if (isset($_SESSION['flash_message'])): ?>
             <div class="alert alert-<?php echo $_SESSION['flash_type'] ?? 'info'; ?> alert-dismissible fade show" role="alert">
                 <?php 
@@ -125,4 +147,7 @@ function url($path) {
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
             <?php unset($_SESSION['flash_message'], $_SESSION['flash_type']); ?>
-        <?php endif; ?> 
+        <?php endif; ?>
+    </main>
+</body>
+</html> 

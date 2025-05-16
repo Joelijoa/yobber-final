@@ -25,7 +25,7 @@ try {
     $application_id = (int)$_GET['id'];
     $user_id = getUserId();
 
-    // Récupérer les détails de la candidature
+// Récupérer les détails de la candidature
     $query = "
         SELECT 
             a.*,
@@ -33,15 +33,15 @@ try {
             u.first_name, u.last_name, u.email, u.phone,
             DATE_FORMAT(a.created_at, '%d/%m/%Y à %H:%i') as formatted_date,
             DATE_FORMAT(a.updated_at, '%d/%m/%Y à %H:%i') as response_date,
-            CASE 
-                WHEN a.status = 'pending' THEN 'En attente'
-                WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
-                WHEN a.status = 'accepted' THEN 'Acceptée'
-                WHEN a.status = 'rejected' THEN 'Refusée'
-                ELSE a.status
-            END as status_fr
-        FROM applications a
-        JOIN jobs j ON a.job_id = j.id
+           CASE 
+               WHEN a.status = 'pending' THEN 'En attente'
+               WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
+               WHEN a.status = 'accepted' THEN 'Acceptée'
+               WHEN a.status = 'rejected' THEN 'Refusée'
+               ELSE a.status
+           END as status_fr
+    FROM applications a
+    JOIN jobs j ON a.job_id = j.id
         JOIN users u ON a.candidate_id = u.id
         WHERE a.id = :application_id AND j.recruiter_id = :user_id
     ";
@@ -52,9 +52,9 @@ try {
         'user_id' => $user_id
     ]);
     
-    $application = $stmt->fetch(PDO::FETCH_ASSOC);
+$application = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$application) {
+if (!$application) {
         set_flash_message('error', 'Candidature non trouvée ou accès non autorisé.');
         redirect('/recruiter/applications.php');
         exit;
@@ -138,7 +138,7 @@ require_once __DIR__ . '/../includes/header.php';
     ?>
         <div class="alert alert-<?php echo $flash_message['type']; ?>">
             <?php echo htmlspecialchars($flash_message['message']); ?>
-        </div>
+    </div>
     <?php endif; ?>
 
     <div class="row">
@@ -147,17 +147,17 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Détails de la candidature</h5>
-                    <span class="badge bg-<?php 
-                        echo match($application['status']) {
-                            'pending' => 'warning',
-                            'reviewed' => 'info',
-                            'accepted' => 'success',
-                            'rejected' => 'danger',
-                            default => 'secondary'
-                        };
-                    ?>">
-                        <?php echo $application['status_fr']; ?>
-                    </span>
+                        <span class="badge bg-<?php 
+                            echo match($application['status']) {
+                                'pending' => 'warning',
+                                'reviewed' => 'info',
+                                'accepted' => 'success',
+                                'rejected' => 'danger',
+                                default => 'secondary'
+                            };
+                        ?>">
+                            <?php echo $application['status_fr']; ?>
+                        </span>
                 </div>
                 <div class="card-body">
                     <h6>Poste</h6>
@@ -171,34 +171,32 @@ require_once __DIR__ . '/../includes/header.php';
 
                     <h6>Message du candidat</h6>
                     <div class="card bg-light mb-3">
-                        <div class="card-body">
+        <div class="card-body">
                             <?php echo nl2br(htmlspecialchars($application['message'] ?? 'Aucun message')); ?>
-                        </div>
-                    </div>
+        </div>
+    </div>
 
                     <?php if (!empty($application['feedback'])): ?>
                         <h6>Votre réponse</h6>
                         <div class="card bg-light mb-3">
-                            <div class="card-body">
-                                <?php echo nl2br(htmlspecialchars($application['feedback'])); ?>
-                            </div>
-                        </div>
-                    <?php endif; ?>
-                </div>
+            <div class="card-body">
+                <?php echo nl2br(htmlspecialchars($application['feedback'])); ?>
             </div>
+        </div>
+    <?php endif; ?>
+        </div>
+    </div>
 
             <!-- Formulaire de réponse -->
-            <?php if ($application['status'] === 'pending' || $application['status'] === 'reviewed'): 
-                $csrf_token = generate_csrf_token();
-            ?>
+            <?php if ($application['status'] === 'pending' || $application['status'] === 'reviewed'): ?>
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0">Répondre à la candidature</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" action="respond_to_application.php" id="responseForm">
+                    <form method="POST" action="respond_to_application.php">
+                        <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                         <input type="hidden" name="application_id" value="<?php echo $application_id; ?>">
-                        <input type="hidden" name="csrf_token" value="<?php echo $csrf_token; ?>">
                         <div class="mb-3">
                             <label for="feedback" class="form-label">Votre message au candidat</label>
                             <textarea class="form-control" id="feedback" name="feedback" rows="5" required></textarea>
@@ -263,7 +261,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <h6>Documents</h6>
                         <?php if (!empty($application['cv_path'])): ?>
                             <p>
-                                <a href="/<?php echo htmlspecialchars($application['cv_path']); ?>" 
+                                <a href="/public/api/get-cv.php?id=<?php echo $application_id; ?>" 
                                    class="btn btn-outline-primary btn-sm" 
                                    target="_blank">
                                     <i class="fas fa-file-pdf"></i> CV
@@ -273,7 +271,7 @@ require_once __DIR__ . '/../includes/header.php';
 
                         <?php if (!empty($application['cover_letter_path'])): ?>
                             <p>
-                                <a href="/<?php echo htmlspecialchars($application['cover_letter_path']); ?>" 
+                                <a href="/public/api/get-cover-letter.php?id=<?php echo $application_id; ?>" 
                                    class="btn btn-outline-primary btn-sm" 
                                    target="_blank">
                                     <i class="fas fa-file-alt"></i> Lettre de motivation
@@ -281,7 +279,7 @@ require_once __DIR__ . '/../includes/header.php';
                             </p>
                         <?php endif; ?>
                     </div>
-                </div>
+                    </div>
             </div>
         </div>
     </div>

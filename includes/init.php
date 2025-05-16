@@ -11,11 +11,6 @@ if (session_status() === PHP_SESSION_NONE) {
 // Définition du fuseau horaire
 date_default_timezone_set('Europe/Paris');
 
-// Définition de la durée de vie de la session (30 minutes) si pas déjà définie
-if (!defined('SESSION_LIFETIME')) {
-    define('SESSION_LIFETIME', 1800);
-}
-
 // Inclusion des fichiers nécessaires dans l'ordre
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/database.php';

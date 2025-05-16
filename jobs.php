@@ -40,40 +40,69 @@ if (isLoggedIn() && isUserType('candidate')) {
     $favorites = array_column($stmtFav->fetchAll(), 'job_id');
 }
 ?>
+
 <div class="container py-5">
-    <h1 class="mb-4">Offres d'emploi</h1>
-    <form method="get" class="row g-3 mb-4">
-        <div class="col-md-4">
-            <input type="text" class="form-control" name="q" placeholder="Mot-clé, entreprise..." value="<?php echo htmlspecialchars($search); ?>">
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="display-4 mb-0">Trouvez votre prochain emploi</h1>
+            <p class="text-muted lead">Découvrez les meilleures opportunités professionnelles</p>
         </div>
-        <div class="col-md-3">
-            <input type="text" class="form-control" name="location" placeholder="Lieu" value="<?php echo htmlspecialchars($location); ?>">
+    </div>
+
+    <div class="card mb-4 border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-search text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" name="q" placeholder="Titre, entreprise, mots-clés..." value="<?php echo htmlspecialchars($search); ?>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-map-marker-alt text-muted"></i>
+                        </span>
+                        <input type="text" class="form-control border-start-0 ps-0" name="location" placeholder="Ville, région..." value="<?php echo htmlspecialchars($location); ?>">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="fas fa-briefcase text-muted"></i>
+                        </span>
+                        <select class="form-select border-start-0 ps-0" name="type">
+                            <option value="">Type de contrat</option>
+                            <option value="CDI" <?php if($type==='CDI') echo 'selected'; ?>>CDI</option>
+                            <option value="CDD" <?php if($type==='CDD') echo 'selected'; ?>>CDD</option>
+                            <option value="Alternance" <?php if($type==='Alternance') echo 'selected'; ?>>Alternance</option>
+                            <option value="Stage" <?php if($type==='Stage') echo 'selected'; ?>>Stage</option>
+                            <option value="Freelance" <?php if($type==='Freelance') echo 'selected'; ?>>Freelance</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Rechercher
+                    </button>
+                </div>
+            </form>
         </div>
-        <div class="col-md-3">
-            <select class="form-select" name="type">
-                <option value="">Type de contrat</option>
-                <option value="CDI" <?php if($type==='CDI') echo 'selected'; ?>>CDI</option>
-                <option value="CDD" <?php if($type==='CDD') echo 'selected'; ?>>CDD</option>
-                <option value="Alternance" <?php if($type==='Alternance') echo 'selected'; ?>>Alternance</option>
-                <option value="Stage" <?php if($type==='Stage') echo 'selected'; ?>>Stage</option>
-                <option value="Freelance" <?php if($type==='Freelance') echo 'selected'; ?>>Freelance</option>
-            </select>
-        </div>
-        <div class="col-md-2 d-grid">
-            <button type="submit" class="btn btn-primary">Filtrer</button>
-        </div>
-    </form>
-    <div class="row g-4">
-        <?php if (count($jobs) > 0): ?>
+    </div>
+
+    <?php if (count($jobs) > 0): ?>
+        <div class="row g-4">
             <?php foreach ($jobs as $job): ?>
                 <div class="col-md-6 col-lg-4">
-                    <div class="card h-100">
+                    <div class="card job-card h-100">
                         <div class="card-body">
                             <div class="d-flex align-items-center mb-3">
                                 <?php if (!empty($job['company_logo'])): ?>
-                                    <img src="<?php echo htmlspecialchars($job['company_logo']); ?>" alt="<?php echo htmlspecialchars($job['company_name']); ?>" class="company-logo me-3" style="width: 50px; height: 50px; object-fit: contain;">
+                                    <img src="<?php echo htmlspecialchars($job['company_logo']); ?>" alt="<?php echo htmlspecialchars($job['company_name']); ?>" class="company-logo me-3">
                                 <?php else: ?>
-                                    <div class="company-logo-placeholder me-3 bg-light rounded d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                    <div class="company-logo-placeholder me-3 bg-light rounded d-flex align-items-center justify-content-center">
                                         <i class="fas fa-building text-muted"></i>
                                     </div>
                                 <?php endif; ?>
@@ -86,17 +115,19 @@ if (isLoggedIn() && isUserType('candidate')) {
                                 <i class="fas fa-map-marker-alt text-muted me-2"></i>
                                 <?php echo htmlspecialchars($job['location']); ?>
                             </p>
-                            <div class="d-flex justify-content-between align-items-center mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
                                 <span class="badge bg-primary"><?php echo htmlspecialchars($job['type']); ?></span>
                                 <small class="text-muted">Publié le <?php echo date('d/m/Y', strtotime($job['created_at'])); ?></small>
                             </div>
                         </div>
                         <div class="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
-                            <a href="job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-outline-primary btn-sm">Voir plus</a>
+                            <a href="job-details.php?id=<?php echo $job['id']; ?>" class="btn btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>Voir plus
+                            </a>
                             <?php if (isLoggedIn() && isUserType('candidate')): ?>
                                 <button type="button" 
                                         onclick="toggleFavorite(this)" 
-                                        class="btn btn-link p-0 ms-2" 
+                                        class="btn btn-link p-0" 
                                         data-job-id="<?php echo $job['id']; ?>" 
                                         title="<?php echo in_array($job['id'], $favorites) ? 'Retirer des favoris' : 'Ajouter aux favoris'; ?>">
                                     <i class="fa<?php echo in_array($job['id'], $favorites) ? 's' : 'r'; ?> fa-heart text-danger"></i>
@@ -106,12 +137,16 @@ if (isLoggedIn() && isUserType('candidate')) {
                     </div>
                 </div>
             <?php endforeach; ?>
-        <?php else: ?>
-            <div class="col-12">
-                <div class="alert alert-info text-center">Aucune offre ne correspond à vos critères.</div>
+        </div>
+    <?php else: ?>
+        <div class="text-center py-5">
+            <div class="mb-4">
+                <i class="fas fa-search fa-3x text-muted"></i>
             </div>
-        <?php endif; ?>
-    </div>
+            <h3>Aucune offre trouvée</h3>
+            <p class="text-muted">Essayez de modifier vos critères de recherche</p>
+        </div>
+    <?php endif; ?>
 </div>
 
 <!-- Toast pour les notifications -->
@@ -125,6 +160,49 @@ if (isLoggedIn() && isUserType('candidate')) {
         <div class="toast-body" id="toastMessage"></div>
     </div>
 </div>
+
+<style>
+.company-logo {
+    width: 50px;
+    height: 50px;
+    object-fit: contain;
+}
+
+.company-logo-placeholder {
+    width: 50px;
+    height: 50px;
+}
+
+.hover-shadow {
+    transition: all 0.3s ease;
+}
+
+.hover-shadow:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1) !important;
+}
+
+.bg-primary-light {
+    background-color: var(--primary-light) !important;
+}
+
+.card-title a:hover {
+    color: var(--primary-color) !important;
+}
+
+.input-group-text {
+    color: #6c757d;
+}
+
+.form-control:focus, .form-select:focus {
+    box-shadow: none;
+    border-color: var(--primary-color);
+}
+
+.input-group:focus-within .input-group-text {
+    border-color: var(--primary-color);
+}
+</style>
 
 <script>
 function toggleFavorite(button) {
@@ -168,15 +246,4 @@ function toggleFavorite(button) {
 }
 </script>
 
-<?php require_once __DIR__ . '/includes/footer.php'; ?>
-<style>
-.company-logo-placeholder {
-    background-color: #f3f3f3;
-    border-radius: 0.5rem;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-</style> 
+<?php require_once __DIR__ . '/includes/footer.php'; ?> 

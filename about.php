@@ -12,7 +12,7 @@ require_once './includes/header.php';
                 <p class="lead mb-4">Votre partenaire de confiance pour la recherche d'emploi et le recrutement.</p>
             </div>
             <div class="col-lg-6">
-                <img src="../assets/images/about-hero.svg" alt="About Yobber" class="img-fluid">
+                <img src="/public/assets/images/about.png" alt="About Yobber" class="img-fluid">
             </div>
         </div>
     </div>

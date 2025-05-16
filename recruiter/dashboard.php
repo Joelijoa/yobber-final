@@ -75,121 +75,84 @@ $stmt->execute([$user_id]);
 $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<div class="container mt-4">
-    <h2>Tableau de bord recruteur</h2>
+<div class="dashboard-container">
+    <h2 class="dashboard-title">Tableau de bord recruteur</h2>
 
-    <!-- Statistiques des offres d'emploi -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total des offres</h5>
-                    <h2 class="card-text"><?php echo $job_stats['total_jobs']; ?></h2>
-                </div>
-            </div>
+    <!-- Stats Cards -->
+    <div class="recruiter-stats">
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $job_stats['total_jobs']; ?></div>
+            <div class="stat-title">Total des offres</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Offres actives</h5>
-                    <h2 class="card-text"><?php echo $job_stats['active_jobs']; ?></h2>
-                </div>
-            </div>
+        
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $job_stats['active_jobs']; ?></div>
+            <div class="stat-title">Offres actives</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <h5 class="card-title">Brouillons</h5>
-                    <h2 class="card-text"><?php echo $job_stats['draft_jobs']; ?></h2>
-                </div>
-            </div>
+        
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $job_stats['draft_jobs']; ?></div>
+            <div class="stat-title">Brouillons</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-secondary text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Offres closes</h5>
-                    <h2 class="card-text"><?php echo $job_stats['closed_jobs']; ?></h2>
-                </div>
-            </div>
+        
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $job_stats['closed_jobs']; ?></div>
+            <div class="stat-title">Offres closes</div>
         </div>
-    </div>
 
-    <!-- Statistiques des candidatures -->
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Total candidatures</h5>
-                    <h2 class="card-text"><?php echo $application_stats['total_applications']; ?></h2>
-                </div>
-            </div>
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $application_stats['total_applications']; ?></div>
+            <div class="stat-title">Total candidatures</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-warning text-dark">
-                <div class="card-body">
-                    <h5 class="card-title">En attente</h5>
-                    <h2 class="card-text"><?php echo $application_stats['pending_applications']; ?></h2>
-                </div>
-            </div>
+
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $application_stats['pending_applications']; ?></div>
+            <div class="stat-title">En attente</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Acceptées</h5>
-                    <h2 class="card-text"><?php echo $application_stats['accepted_applications']; ?></h2>
-                </div>
-            </div>
+
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $application_stats['accepted_applications']; ?></div>
+            <div class="stat-title">Acceptées</div>
         </div>
-        <div class="col-md-3">
-            <div class="card bg-danger text-white">
-                <div class="card-body">
-                    <h5 class="card-title">Refusées</h5>
-                    <h2 class="card-text"><?php echo $application_stats['rejected_applications']; ?></h2>
-                </div>
-            </div>
+
+        <div class="recruiter-stat-card">
+            <div class="stat-number"><?php echo $application_stats['rejected_applications']; ?></div>
+            <div class="stat-title">Refusées</div>
         </div>
     </div>
 
     <div class="row">
         <!-- Dernières candidatures -->
         <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Dernières candidatures</h5>
-                    <a href="applications.php" class="btn btn-sm btn-primary">Voir tout</a>
+            <div class="activity-section">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-users me-2"></i>Dernières candidatures
+                    </h3>
+                    <a href="applications.php" class="view-all-btn">Voir tout</a>
                 </div>
-                <div class="card-body">
+                <div class="activity-list">
                     <?php if (empty($recent_applications)): ?>
-                        <p class="text-muted">Aucune candidature récente</p>
+                        <p class="text-muted mb-0">Aucune candidature récente</p>
                     <?php else: ?>
-                        <div class="list-group">
-                            <?php foreach ($recent_applications as $application): ?>
-                                <a href="view_application.php?id=<?php echo $application['application_id']; ?>" 
-                                   class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1"><?php echo htmlspecialchars($application['job_title']); ?></h6>
-                                        <small class="text-muted"><?php echo $application['application_date']; ?></small>
-                                    </div>
-                                    <p class="mb-1">
+                        <?php foreach ($recent_applications as $application): ?>
+                            <div class="activity-item">
+                                <div>
+                                    <div class="activity-item-title">
                                         <?php echo htmlspecialchars($application['first_name'] . ' ' . $application['last_name']); ?>
-                                    </p>
-                                    <small class="text-muted">
-                                        Statut : 
-                                        <span class="badge bg-<?php 
-                                            echo match($application['application_status']) {
-                                                'pending' => 'warning',
-                                                'reviewed' => 'info',
-                                                'accepted' => 'success',
-                                                'rejected' => 'danger',
-                                                default => 'secondary'
-                                            };
-                                        ?>">
-                                            <?php echo $application['application_status']; ?>
+                                        <span class="status-badge <?php echo $application['application_status']; ?>">
+                                            <?php echo ucfirst($application['application_status']); ?>
                                         </span>
-                                    </small>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
+                                    </div>
+                                    <div class="activity-item-meta">
+                                        <?php echo htmlspecialchars($application['job_title']); ?>
+                                    </div>
+                                </div>
+                                <div class="activity-item-meta">
+                                    <?php echo date('d/m/Y', strtotime($application['application_date'])); ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -197,30 +160,35 @@ $active_jobs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         <!-- Offres d'emploi actives -->
         <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0">Offres d'emploi actives</h5>
-                    <a href="jobs.php" class="btn btn-sm btn-primary">Voir tout</a>
+            <div class="activity-section">
+                <div class="activity-header">
+                    <h3 class="activity-title">
+                        <i class="fas fa-briefcase me-2"></i>Offres d'emploi actives
+                    </h3>
+                    <a href="jobs.php" class="view-all-btn">Voir tout</a>
                 </div>
-                <div class="card-body">
+                <div class="activity-list">
                     <?php if (empty($active_jobs)): ?>
-                        <p class="text-muted">Aucune offre d'emploi active</p>
+                        <p class="text-muted mb-0">Aucune offre d'emploi active</p>
                     <?php else: ?>
-                        <div class="list-group">
-                            <?php foreach ($active_jobs as $job): ?>
-                                <a href="view_job.php?id=<?php echo $job['id']; ?>" 
-                                   class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h6 class="mb-1"><?php echo htmlspecialchars($job['title']); ?></h6>
-                                        <small class="text-muted"><?php echo $job['posted_date']; ?></small>
+                        <?php foreach ($active_jobs as $job): ?>
+                            <div class="activity-item">
+                                <div>
+                                    <div class="activity-item-title">
+                                        <a href="view_job.php?id=<?php echo $job['id']; ?>">
+                                            <?php echo htmlspecialchars($job['title']); ?>
+                                        </a>
                                     </div>
-                                    <p class="mb-1"><?php echo htmlspecialchars($job['company_name']); ?></p>
-                                    <small class="text-muted">
+                                    <div class="activity-item-meta">
+                                        <?php echo htmlspecialchars($job['company_name']); ?> •
                                         <?php echo $job['application_count']; ?> candidature(s)
-                                    </small>
-                                </a>
-                            <?php endforeach; ?>
-                        </div>
+                                    </div>
+                                </div>
+                                <div class="activity-item-meta">
+                                    <?php echo $job['posted_date']; ?>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     <?php endif; ?>
                 </div>
             </div>

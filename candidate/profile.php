@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $success_message = "Profil mis à jour avec succès !";
-
+        
         // Récupérer le profil mis à jour
         $stmt = $conn->prepare("
             SELECT u.*, c.*

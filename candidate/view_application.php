@@ -25,23 +25,23 @@ try {
     $application_id = (int)$_GET['id'];
     $user_id = getUserId();
 
-    // Récupérer les détails de la candidature
+// Récupérer les détails de la candidature
     $query = "
         SELECT 
             a.*,
             j.title as job_title, j.company_name, j.location, j.type as job_type,
             DATE_FORMAT(a.created_at, '%d/%m/%Y à %H:%i') as formatted_date,
             DATE_FORMAT(a.updated_at, '%d/%m/%Y à %H:%i') as response_date,
-            CASE 
-                WHEN a.status = 'pending' THEN 'En attente'
-                WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
-                WHEN a.status = 'accepted' THEN 'Acceptée'
-                WHEN a.status = 'rejected' THEN 'Refusée'
-                ELSE a.status
-            END as status_fr
-        FROM applications a
-        JOIN jobs j ON a.job_id = j.id
-        WHERE a.id = :application_id AND a.user_id = :user_id
+           CASE 
+               WHEN a.status = 'pending' THEN 'En attente'
+               WHEN a.status = 'reviewed' THEN 'En cours d\'examen'
+               WHEN a.status = 'accepted' THEN 'Acceptée'
+               WHEN a.status = 'rejected' THEN 'Refusée'
+               ELSE a.status
+           END as status_fr
+    FROM applications a
+    JOIN jobs j ON a.job_id = j.id
+        WHERE a.id = :application_id AND a.candidate_id = :user_id
     ";
 
     $stmt = $conn->prepare($query);
@@ -50,9 +50,9 @@ try {
         'user_id' => $user_id
     ]);
     
-    $application = $stmt->fetch(PDO::FETCH_ASSOC);
+$application = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$application) {
+if (!$application) {
         set_flash_message('error', 'Candidature non trouvée ou accès non autorisé.');
         redirect('/candidate/applications.php');
         exit;
@@ -74,7 +74,7 @@ try {
         ");
         $stmt->execute([
             $user_id, 
-            "/candidate/view_application.php?id=" . $application_id
+            "candidate/view_application.php?id=" . $application_id
         ]);
     }
 
@@ -112,18 +112,18 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="card mb-4">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <h5 class="mb-0">Détails de la candidature</h5>
-                    <span class="badge bg-<?php 
-                        echo match($application['status']) {
-                            'pending' => 'warning',
-                            'reviewed' => 'info',
-                            'accepted' => 'success',
-                            'rejected' => 'danger',
-                            default => 'secondary'
-                        };
-                    ?>">
-                        <?php echo $application['status_fr']; ?>
-                    </span>
-                </div>
+                        <span class="badge bg-<?php 
+                            echo match($application['status']) {
+                                'pending' => 'warning',
+                                'reviewed' => 'info',
+                                'accepted' => 'success',
+                                'rejected' => 'danger',
+                                default => 'secondary'
+                            };
+                        ?>">
+                            <?php echo $application['status_fr']; ?>
+                        </span>
+                    </div>
                 <div class="card-body">
                     <h6>Poste</h6>
                     <p>
@@ -144,7 +144,7 @@ require_once __DIR__ . '/../includes/header.php';
                     <div class="card bg-light mb-3">
                         <div class="card-body">
                             <?php echo nl2br(htmlspecialchars($application['message'] ?? 'Aucun message')); ?>
-                        </div>
+                    </div>
                     </div>
 
                     <?php if (!empty($application['feedback'])): ?>
@@ -179,11 +179,11 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
 
             <!-- Statut de la candidature -->
-            <div class="card">
-                <div class="card-header">
+                <div class="card">
+                    <div class="card-header">
                     <h5 class="mb-0">Statut de la candidature</h5>
-                </div>
-                <div class="card-body">
+                    </div>
+                    <div class="card-body">
                     <div class="d-flex align-items-center mb-3">
                         <div class="flex-shrink-0">
                             <i class="fas fa-circle text-<?php 

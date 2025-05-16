@@ -17,7 +17,7 @@ $stmt = $conn->prepare("
         DATE_FORMAT(a.created_at, '%d/%m/%Y') as application_date
     FROM applications a 
     JOIN jobs j ON a.job_id = j.id 
-    WHERE a.user_id = ? 
+    WHERE a.candidate_id = ? 
     ORDER BY a.created_at DESC
 ");
 $stmt->execute([$user_id]);

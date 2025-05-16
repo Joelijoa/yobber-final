@@ -7,28 +7,28 @@ require_once __DIR__ . '/../config/database.php';
 // Vérifier si l'utilisateur est connecté et est un recruteur
 if (!isLoggedIn() || !isUserType('recruiter')) {
     set_flash_message('error', 'Accès non autorisé.');
-    redirect('/auth/login.php');
+    redirect('/public/auth/login.php');
     exit;
 }
 
 // Vérifier si la requête est en POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     set_flash_message('error', 'Méthode non autorisée.');
-    redirect('/recruiter/applications.php');
+    redirect('/public/recruiter/applications.php');
     exit;
 }
 
 // Vérifier le jeton CSRF
 if (!isset($_POST['csrf_token']) || !verify_csrf_token($_POST['csrf_token'])) {
     set_flash_message('error', 'Token CSRF invalide.');
-    redirect('/recruiter/applications.php');
+    redirect('/public/recruiter/applications.php');
     exit;
 }
 
 // Vérifier les données requises
 if (!isset($_POST['application_id']) || !isset($_POST['action']) || !isset($_POST['feedback'])) {
     set_flash_message('error', 'Données manquantes.');
-    redirect('/recruiter/applications.php');
+    redirect('/public/recruiter/applications.php');
     exit;
 }
 
@@ -72,25 +72,8 @@ try {
             updated_at = NOW()
         WHERE id = ?
     ");
-
-    try {
-        $stmt->execute([$new_status, $feedback, $application_id]);
-        
-        // Vérifier si la mise à jour a réussi
-        $stmt = $conn->prepare("
-            SELECT status, feedback 
-            FROM applications 
-            WHERE id = ?
-        ");
-        $stmt->execute([$application_id]);
-        $updated = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        if (!$updated || $updated['status'] !== $new_status || $updated['feedback'] !== $feedback) {
-            throw new Exception('La mise à jour du statut et du feedback a échoué.');
-        }
-    } catch (Exception $e) {
-        throw new Exception('Erreur lors de la mise à jour : ' . $e->getMessage());
-    }
+    
+    $stmt->execute([$new_status, $feedback, $application_id]);
 
     // Créer une notification pour le candidat
     $notification_message = $new_status === 'accepted' 
@@ -104,7 +87,7 @@ try {
     $stmt->execute([
         $application['candidate_id'],
         $notification_message,
-        "/candidate/view_application.php?id=" . $application_id
+        "candidate/view_application.php?id=" . $application_id
     ]);
 
     // Valider la transaction
@@ -120,5 +103,5 @@ try {
 }
 
 // Rediriger vers la page de détails de la candidature
-redirect("/recruiter/view_application.php?id=" . $application_id);
+redirect("/public/recruiter/view_application.php?id=" . $application_id);
 exit;

@@ -7,14 +7,14 @@ require_once __DIR__ . '/../config/database.php';
 // Vérifier si l'utilisateur est connecté et est un recruteur
 if (!isLoggedIn() || !isUserType('recruiter')) {
     set_flash_message('error', 'Accès non autorisé.');
-    redirect('/recruiter/jobs.php');
+    redirect('/public/recruiter/jobs.php');
     exit;
 }
 
 // Vérifier si la requête est en POST et si l'ID de l'offre est fourni
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !isset($_POST['job_id']) || !is_numeric($_POST['job_id'])) {
     set_flash_message('error', 'Méthode non autorisée ou ID de l\'offre invalide.');
-    redirect('/recruiter/jobs.php');
+    redirect('/public/recruiter/jobs.php');
     exit;
 }
 
@@ -58,6 +58,6 @@ try {
     }
     set_flash_message('error', 'Une erreur est survenue lors de la suppression de l\'offre : ' . $e->getMessage());
 } finally {
-    redirect('/recruiter/jobs.php');
+    redirect('/public/recruiter/jobs.php');
     exit;
 } 

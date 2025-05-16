@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/database.php';
 
 // Vérifier si l'utilisateur est connecté
 if (!isLoggedIn()) {
-    redirect('/auth/login.php');
+    redirect('/public/auth/login.php');
     exit;
 }
 
@@ -26,7 +26,7 @@ try {
         $stmt->execute([$user_id]);
         
         set_flash_message('success', 'Toutes les notifications ont été marquées comme lues.');
-        redirect('/candidate/notifications.php');
+        redirect('/public/candidate/notifications.php');
         exit;
     }
 
@@ -52,7 +52,7 @@ try {
 
 } catch (Exception $e) {
     set_flash_message('error', "Une erreur est survenue : " . $e->getMessage());
-    redirect('/candidate/dashboard.php');
+    redirect('/public/candidate/dashboard.php');
     exit;
 }
 
@@ -64,7 +64,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Mes notifications</h2>
         <?php if ($unread_count > 0): ?>
-            <form method="POST" class="d-inline">
+            <form method="POST">
                 <button type="submit" name="mark_all_read" class="btn btn-outline-primary">
                     <i class="fas fa-check-double"></i> Tout marquer comme lu
                 </button>
@@ -94,7 +94,7 @@ require_once __DIR__ . '/../includes/header.php';
                         <small class="text-muted"><?php echo $notification['formatted_date']; ?></small>
                     </div>
                     <?php if ($notification['link']): ?>
-                        <a href="<?php 
+                        <a href="/public<?php 
                             $link = htmlspecialchars($notification['link']);
                             echo strpos($link, '?') !== false ? $link . '&notification=1' : $link . '?notification=1';
                         ?>" class="btn btn-sm btn-primary mt-2">
